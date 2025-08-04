@@ -1,0 +1,29 @@
+# Cartelle di build
+/dist
+/build
+
+# File temporanei
+*.log
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+
+# Output TypeScript
+*.tsbuildinfo
+
+# Nodemon / ts-node-dev
+.pids
+node_modules/
+
+# Configurazioni IDE/editor
+.vscode/
+.idea/
+*.code-workspace
+
+# Ambienti (variabili segrete!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.productio
