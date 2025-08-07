@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { handleSystemStats } from "../controllers/systemController.js";
 
-const router = Router();
+const systemRouter = Router();
 
-router.get('/system', handleSystemStats);
+systemRouter.get('/system', handleSystemStats);
 
 
-export default router;
+export default systemRouter;

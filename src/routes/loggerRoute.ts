@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { getLogsController, writeLogsController,deleteLogsController } from "../controllers/infoLogController.js";
 
-const router = Router();
+const loggerRouter = Router();
 
-router.get('/logs', getLogsController);
-router.post('/logs', writeLogsController);
-router.delete('/:id',deleteLogsController);
+loggerRouter.get('/logs', getLogsController);
+loggerRouter.post('/logs', writeLogsController);
+loggerRouter.delete('/:id',deleteLogsController);
 
-export default router;
+export default loggerRouter;
