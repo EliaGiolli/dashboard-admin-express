@@ -20,8 +20,7 @@ app.use(express.json());
 // Define routes
 app.use('/env', envRouter);
 app.use('/system', systemRouter);
-app.use('/crypto/hash', cryptoRouter);
-app.use('/crypto/compare', cryptoRouter);
+app.use('/crypto', cryptoRouter);
 app.use('/logs', loggerRouter);
 app.use('/:id', loggerRouter);
 

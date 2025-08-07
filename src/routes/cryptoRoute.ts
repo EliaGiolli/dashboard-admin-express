@@ -6,7 +6,7 @@ import {
 
 const cryptoRouter = Router();
 
-cryptoRouter.post('/crypto/hash', hashPasswordController);
-cryptoRouter.post('/crypto/compare', comparePasswordController);
+cryptoRouter.post('/hash', hashPasswordController);
+cryptoRouter.post('/compare', comparePasswordController);
 
 export default cryptoRouter;

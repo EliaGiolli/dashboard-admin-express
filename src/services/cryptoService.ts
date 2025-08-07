@@ -6,6 +6,7 @@ export class CryptoService {
     constructor(private readonly saltRounds: number = 10){}
 
     async hashPassword(password:string):Promise<string>{
+        
         return await bcrypt.hash(password, this.saltRounds);
     }
 
