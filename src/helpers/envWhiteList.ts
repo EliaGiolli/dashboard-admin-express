@@ -1,3 +1,4 @@
+//Defines which environment variables are "safe" to expose and their expected types
 import { type EnvSchema } from "../types/envTypes.js";
 
 export const envWhitelist: EnvSchema = {

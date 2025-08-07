@@ -6,14 +6,20 @@ export class LoggerService {
 
     constructor(private readonly filePath:string){}
 
-    async readLogs(){
-
-        const data = await fs.readFile(this.filePath, 'utf-8');
-        const log = JSON.parse(data);
-
-        return log;
+    async readLogs(): Promise<InfoLog[]> {
+        try {
+            const data = await fs.readFile(this.filePath, 'utf-8');
+            return JSON.parse(data);
+        } catch (err: any) {
+            if (err.code === 'ENOENT') {
+                // File does not exist, return empty array
+                return [];
+            }
+            throw err;
+        }
     }
-    async writeLogs(newLog:InfoLog){
+
+    async writeLogs(newLog:InfoLog): Promise<void> {
 
         const logs = await this.readLogs() ?? [];
 
@@ -22,7 +28,7 @@ export class LoggerService {
         await fs.writeFile(this.filePath, JSON.stringify(logs, null, 2), 'utf-8');
     }
 
-    async deleteLogById(id:string){
+    async deleteLogById(id:string): Promise<InfoLog[]> {
         const logs = await this.readLogs();
         const updatedLogs = logs.filter((log: InfoLog) => log.id !== id);
 

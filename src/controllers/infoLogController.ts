@@ -21,7 +21,7 @@ export async function writeLogsController(req:Request, res:Response){
     const newLog:InfoLog = req.body;
     try{
         await logInfo.writeLogs(newLog);
-        res.status(200).json({message: 'Log written', log:logInfo})
+        res.status(200).json({message: 'Log written', newLog:logInfo});
     }catch(err){
         res.status(500).json({error: 'unable to write logs'});
     }
@@ -37,7 +37,7 @@ export async function deleteLogsController(req:Request, res:Response){
 
     try{
         const updatedLog = await logInfo.deleteLogById(id);
-        res.status(200).json({message: 'log updated', logs:logInfo});
+        res.status(200).json({message: 'log updated', updatedLog:logInfo});
     }catch(err){
         res.status(500).json({error: 'unable to update the log'});
     }

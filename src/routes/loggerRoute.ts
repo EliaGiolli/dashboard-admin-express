@@ -3,8 +3,8 @@ import { getLogsController, writeLogsController,deleteLogsController } from "../
 
 const loggerRouter = Router();
 
-loggerRouter.get('/logs', getLogsController);
-loggerRouter.post('/logs', writeLogsController);
+loggerRouter.get('/', getLogsController);
+loggerRouter.post('/', writeLogsController);
 loggerRouter.delete('/:id',deleteLogsController);
 
 export default loggerRouter;

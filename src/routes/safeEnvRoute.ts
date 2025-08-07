@@ -3,6 +3,6 @@ import { Router } from "express";
 
 const envRouter = Router();
 
-envRouter.get('/env', getSafeEnvController);
+envRouter.get('/', getSafeEnvController);
 
 export default envRouter;

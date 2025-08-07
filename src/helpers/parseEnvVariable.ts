@@ -1,3 +1,4 @@
+//Converts a string environment variable to the specified type (string, number, or boolean)
 export function parseEnvVariable(value: string | undefined, type: 'string' | 'number' | 'boolean'): string | number | boolean | undefined {
   
     if(value === undefined) return undefined;
