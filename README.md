@@ -11,9 +11,9 @@ A REST API designed to simulate a developer/admin dashboard—perfect for DevOps
 - **CPU, RAM, uptime:** See the status of the machine running the server.
 - **Endpoints:**  
   - `GET /system` – General system info  
-  - `GET /cpus` – CPU details  
-  - `GET /memory` – Total and free RAM  
-  - `GET /uptime` – Server uptime
+  - `GET /system/cpus` – CPU details  
+  - `GET /system/memory` – Total and free RAM  
+  - `GET /system/uptime` – Server uptime
 
 ### 2. Log Management
 
@@ -25,14 +25,16 @@ A REST API designed to simulate a developer/admin dashboard—perfect for DevOps
   - `GET /logs` – Read logs  
   - `POST /logs` – Write a new log event  
   - `DELETE /logs` – Delete logs (admin only)
+  - `GET /:id` – Get log by ID (if implemented)
 
 ### 3. Cryptography and Hash Testing
 
-- **Hashing and encryption:**  
+- **Hashing and comparison:**  
   - Calculate hashes (SHA256, bcrypt) for a string
-  - Simulate basic encryption
-- **Endpoint:**  
-  - `POST /hash` – Receives a string and returns its hash
+  - Compare hashes
+- **Endpoints:**  
+  - `POST /crypto/hash` – Receives a string and returns its hash  
+  - `POST /crypto/compare` – Compare a string to a hash
 
 ### 4. Environment Variable Access
 
@@ -41,17 +43,6 @@ A REST API designed to simulate a developer/admin dashboard—perfect for DevOps
   - Simulate different environments (dev/prod)
 - **Endpoint:**  
   - `GET /env` – Returns safe environment variables
-
-### 5. Testing Tools
-
-- **Ping, delay, redirect:**  
-  - Test if the server responds (`/ping`)
-  - Simulate a slow server (`/delay/:seconds`)
-  - Simulate HTTP redirects (`/redirect/:url`)
-- **Endpoints:**  
-  - `GET /ping`  
-  - `GET /delay/:seconds`  
-  - `GET /redirect/:url`
 
 ---
 
@@ -64,21 +55,24 @@ This project uses a simple, modern Node.js stack:
 - **[TypeScript](https://www.typescriptlang.org/)** – Strongly typed language that builds on JavaScript, for safer and clearer code.
 - **[ts-node-dev](https://github.com/wclr/ts-node-dev)** – Runs TypeScript code directly with automatic restarts on file changes (hot-reloading) for development.
 - **[dotenv](https://github.com/motdotla/dotenv)** – Loads environment variables from a `.env` file into `process.env`.
+- **[bcrypt](https://www.npmjs.com/package/bcrypt)** – For hashing and comparing passwords.
+- **[zod](https://www.npmjs.com/package/zod)** – TypeScript-first schema validation with static type inference.
 - **[@types/express](https://www.npmjs.com/package/@types/express)** and **[@types/node](https://www.npmjs.com/package/@types/node)** – TypeScript type definitions for Express and Node.js, for better IntelliSense and type safety.
 
 All dependencies are listed in `package.json`.
 
 ## Project Structure
 ```bash
-my-app/
+dashboard/
 │
 ├── src/
-│ ├── index.ts # Express entry point
-│ ├── routes/ # All Express routes
-│ ├── controllers/ # Route logic
-│ ├── services/ # Core logic (RAM, uptime, logs, etc.)
-│ ├── utils/ # General utilities
-│ ├── types/ # Centralized TypeScript types
+│   ├── index.ts # Express entry point
+│   ├── server.ts # Express app setup
+│   ├── routes/ # All Express routes
+│   ├── controllers/ # Route logic
+│   ├── services/ # Core logic (RAM, uptime, logs, etc.)
+│   ├── utils/ # General utilities
+│   ├── types/ # Centralized TypeScript types
 │
 ├── data/ # .json or .log files
 │
@@ -92,8 +86,8 @@ my-app/
 
 1. **Clone the project**
    ```bash
-   git clone <repo-url>
-   cd my-app
+   git clone https://github.com/EliaGiolli/dashboard-admin-express.git
+   cd dashboard
    ```
 
 2. **Install dependencies**
@@ -130,12 +124,23 @@ my-app/
 - **Read logs:**  
   `GET http://localhost:3000/logs`
 
+- **Write a log:**  
+  `POST http://localhost:3000/logs`  
+  Body: `{ "level": "info", "message": "Test log" }`
+
+- **Delete logs:**  
+  `DELETE http://localhost:3000/logs`
+
 - **Hash a string:**  
-  `POST http://localhost:3000/hash`  
+  `POST http://localhost:3000/crypto/hash`  
   Body: `{ "text": "password123" }`
 
-- **Ping:**  
-  `GET http://localhost:3000/ping`
+- **Compare a string to a hash:**  
+  `POST http://localhost:3000/crypto/compare`  
+  Body: `{ "text": "password123", "hash": "<hash>" }`
+
+- **Get environment variables:**  
+  `GET http://localhost:3000/env`
 
 ---
 
@@ -161,5 +166,3 @@ Write code that is simple, clear, and well-commented—clarity always wins over 
 ---
 
 ## License
-
-MIT
