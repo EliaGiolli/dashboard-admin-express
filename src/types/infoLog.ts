@@ -1,5 +1,5 @@
 export type InfoLog = {
-    id: string,
+    id: number,
     timestamp: Date,
     logLevel: string,
     logMessage: string

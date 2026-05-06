@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Log {
+  id Int @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  logLevel String
+  logMessage String
+}
+
+model System {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now()) // when the system creates a log, we don't need to manually pass the date
+  uptime Int
+  totalMemory BigInt
+  freeMemory BigInt
+  cpuUsagePercent Float
+}
+
+model EnvVariable {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  type      String   // Here I will save 'string', 'number' or 'boolean'
+  isPublic  Boolean  @default(false) // If the user wants to show them in the GET /env endpoint
+  updatedAt DateTime @updatedAt
+}
