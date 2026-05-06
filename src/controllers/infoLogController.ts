@@ -1,42 +1,43 @@
+import { AppError } from "../helpers/appError.js";
 import { prisma } from "../lib/prisma.js";
 import { LoggerService } from "../services/infoLogService.js";
-import { type Response, type Request } from "express";
+import { type Response, type Request, type NextFunction } from "express";
 
 const logService = new LoggerService();
 
 // GET
-export async function getLogsController(req: Request, res: Response) {
+export async function getLogsController(req: Request, res: Response, next: NextFunction) {
     try {
         const logs = await logService.readLogs();
         res.status(200).json(logs);
     } catch (err) {
-        res.status(500).json({ error: 'Unable to fetch logs from database' });
+        next(new AppError('Unable to fetch logs from database', 500));
     }
 }
 
 // POST
-export async function writeLogsController(req: Request, res: Response) {
+export async function writeLogsController(req: Request, res: Response, next: NextFunction) {
   
     const { logMessage, logLevel } = req.body;
     
     if (!logMessage || !logLevel) {
-        return res.status(400).json({ error: 'Missing logMessage or logLevel' });
+        return next(new AppError('Missing logMessage or logLevel', 400));
     }
 
     try {
         const newLog = await logService.writeLogs(logMessage, logLevel);
         res.status(201).json({ message: 'Log created', newLog });
     } catch (err) {
-        res.status(500).json({ error: 'Unable to save the log' });
+        next(new AppError('Unable to save the log', 500))
     }
 }
 
 // DELETE
-export async function deleteLogsController(req: Request, res: Response) {
+export async function deleteLogsController(req: Request, res: Response, next: NextFunction) {
     const id = req.params.id;
 
     if (!id) {
-        return res.status(400).json({ error: 'Missing log id parameter' });
+        return next(new AppError('Missing log id parameter', 400));
     }
 
     try {
@@ -44,12 +45,12 @@ export async function deleteLogsController(req: Request, res: Response) {
         await logService.deleteLogById(Number(id));
         res.status(200).json({ message: 'Log deleted successfully' });
     } catch (err) {
-        res.status(500).json({ error: 'Unable to delete the log' });
+        next(new AppError('Unable to delete the log', 500));
     }
 }
 
 // PATCH
-export async function patchLogController(req: Request, res: Response) {
+export async function patchLogController(req: Request, res: Response, next:NextFunction) {
     const { id } = req.params;
     const { archived } = req.body; 
 
@@ -60,6 +61,6 @@ export async function patchLogController(req: Request, res: Response) {
         });
         res.status(200).json(updatedLog);
     } catch (err) {
-        res.status(500).json({ error: 'Errore durante l’aggiornamento del log' });
+        next(new AppError('Unable to update the log', 500))
     }
 }

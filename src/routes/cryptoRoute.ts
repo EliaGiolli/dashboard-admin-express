@@ -5,7 +5,7 @@ import {
 } from "../controllers/cryptoController.js";
 
 // custom middleware
-import { adminGuard } from "../helpers/authGuard.js";
+import { adminGuard } from "../middlewares/authGuard.js";
 
 const cryptoRouter = Router();
 

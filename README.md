@@ -1,125 +1,131 @@
-# Dev Dashboard REST API (Database Edition)
-A REST API designed to simulate a developer/admin dashboard. This project has evolved from a simple Express server to a full-blown database-driven application using **Prisma** and **SQLite3**, making it perfect for learning how to build scalable backends with persistent data.
+# Dev Dashboard REST API (Database Edition) 🚀
+A REST API designed to simulate a developer/admin dashboard. This project has evolved from a simple **Express** server to a full-blown database-driven application using **Prisma** and **SQLite3**, making it perfect for learning how to build scalable backends with persistent data.
 
-## Main Features
-### 1. System Monitoring (Database Backed)
-**Real-time & Historical Stats**: Monitor CPU, RAM, and uptime. Data is now persisted to track system health over time.
+## 🌟 Main Features
+### 1. System Monitoring (Historical Data)
+**Persistence**: Snapshotting CPU, RAM, and uptime into SQLite to track system health trends via Prisma.
 
-Endpoints:
+- `GET /system` – Fetch historical performance stats.
 
-`GET /system` – General system info
+- `POST /system/record` – Force an immediate system snapshot.
 
-`GET /system/cpus` – CPU details
-
-`GET /system/memory` – Total and free RAM
-
-`GET /system/uptime` – Server uptime
+- `PATCH /system/settings` – Update monitoring thresholds.
 
 ### 2. Advanced Log Management
-**Persistence**: Logs are stored in SQLite3 via Prisma, allowing for complex queries and reliable storage.
+**Persistent Storage**: Logs are stored with metadata, allowing for archiving and level-based filtering (info, warning, error).
 
-Levels: Simulate and filter log levels: info, warning, error.
+- `GET /logs` – Fetch all logs from DB.
 
-Endpoints:
+- `POST /logs` – Write a new log entry.
 
-`GET /logs` – Fetch all logs from DB
+- `PATCH /logs/:id` – Update log status (e.g., archived: true).
 
-`POST /logs` – Write a new log entry
-
-`DELETE /logs` – Wipe logs (Admin only)
+- `DELETE /logs/:id` – Permanent removal of a log entry.
 
 ### 3. Cryptography and Hash Testing
-**Security Tools**: Calculate and verify hashes using SHA256 and bcrypt.
+**Security Suite**: Built-in CryptoService for hashing and verifying strings using bcrypt.
 
-Endpoints:
+- `POST /crypto/hash` – Generate a secure hash.
 
-`POST /crypto/hash` – Hash a string
+- `POST /crypto/compare` – Validate plain text against a hash.
 
-`POST /crypto/compare` – Compare text against a stored hash
+### 4. Hybrid Environment Management
+**Safe Exposure**: Combines static .env variables (via whitelist) with dynamic configurations stored in the database.
 
-### 4. Environment Variable Access
-**Safe Exposure**: Filtered access to environment variables using a whitelist helper to prevent sensitive data leaks.
+- `GET /env` – Returns safe env variables and DB configs (like THEME_COLOR).
 
-Endpoint:
-
-`GET /env` – Returns non-sensitive environment variables
+- `PATCH /env/:key` – Update dynamic settings in the database.
 
 ---
 
-## Tech Stack Evolution
-- **Prisma** – Next-generation ORM for Node.js and TypeScript.
+## 🛡️ Global Error Handling (The "NestJS" Way)
+In this version, I moved away from manual `res.status().json()` calls inside controllers. I implemented a Centralized Error Layer, which is the standard approach in enterprise frameworks like NestJS.
 
-- **SQLite3** – Lightweight, serverless SQL database engine.
+### Why this approach?
+- **Consistency**: Every error response follows the same schema.
 
-- **Express** – Web framework for the API layer.
+- **Clean Controllers**: Controllers only focus on the "Happy Path". If something goes wrong, they just "throw" the error forward.
 
-- **TypeScript** – Ensuring type safety across the entire stack.
+- **Future Proof**: This mirrors NestJS Exception Filters, making the transition to that framework much smoother.
 
-- **bcrypt** – Secure password/string hashing.
+### How it works (Code Reference)
+**The Custom Class (appError.ts)**: Extends the native `Error` class to include a statusCode.
 
----
+```TypeScript
+export class AppError extends Error {
+    constructor(public message: string, public statusCode: number) {
+        super(message);
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+```
 
-## Project Structure
-The project follows a clean, modular architecture:
+**The Middleware (errorHandler.ts)**: A global "catcher" registered at the end of the pipeline.
 
-```Bash
-dashboard/
-├── prisma/                # Prisma schema and migrations
-├── src/
-│   ├── controllers/       # Route handlers (System, Logs, Crypto, Env)
-│   ├── generated/prisma/  # Auto-generated Prisma Client (Type-safe)
-│   ├── helpers/           # Utility functions (Env whitelist, Parsers)
-│   ├── lib/               # Database connection instances (prisma.ts)
-│   ├── routes/            # Express route definitions
-│   ├── services/          # Business logic & DB interactions
-│   ├── types/             # Custom TypeScript interfaces/types
-│   ├── server.ts          # App configuration
-│   └── index.ts           # Entry point
-├── dev.db                 # SQLite database file
-├── .env                   # Environment variables (DATABASE_URL, etc.)
-└── tsconfig.json
+```TypeScript
+export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+    res.status(err.statusCode || 500).json({
+        status: 'error',
+        message: err.message || 'Internal Server Error',
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+};
+```
+Usage in Controller:
+
+```TypeScript
+// If something fails, we just call next()
+catch (error) {
+    next(new AppError('Database connection failed', 500));
+}
 ```
 ---
 
-## Getting Started
-### Clone and Install
+## 🏗️ Project Structure
+```bash
+dashboard/
+├── prisma/               # Database Schema (SQLite)
+├── src/
+│   ├── controllers/      # Lean Route Handlers (Request/Response logic)
+│   ├── generated/prisma/ # Type-safe DB Client
+│   ├── helpers/          # AppError class, Env Whitelist, Parsers
+│   ├── lib/              # Prisma Client Singleton
+│   ├── middlewares/      # AuthGuard & Global Error Handler
+│   ├── routes/           # Express Route definitions
+│   ├── services/         # Business Logic (DB interactions, OS logic)
+│   ├── types/            # TS Interfaces
+│   └── server.ts         # App configuration & Middleware registration
+```
+---
 
-```Bash
+## 🚀 Getting Started
+### 1. Installation
+```bash
 git clone https://github.com/EliaGiolli/dashboard-admin-express.git
 npm install
 ```
-### Database Setup
-Ensure your .env file contains: `DATABASE_URL="file:./dev.db`"
 
-```Bash
-#Generate Prisma Client
-npx prisma generate
-```
-```Bash
-# Push schema to the local SQLite database
-npx prisma db push
-Run the server
-```
-```Bash
-# Development (Hot-reload)
-npm run dev
-```
-```Bash
-# Production
-npm run build
-npm start
+### 2. Database Setup
+Ensure your .env contains: `DATABASE_URL="file:./dev.db" and API_SEGRETO="your_secret"`.
+
+```bash
+npx prisma generate  # Sync TypeScript types
+npx prisma db push   # Sync SQLite database
 ```
 
-## Why this version?
-By integrating Prisma, this project now demonstrates:
+### 3. Run
+```bash
+npm run dev # Hot-reload enabled
+```
+---
 
-- Type-Safe Database Queries: No more guessing what the DB returns.
+## 🔐 Security
+- **Whitelist Filtering**: Only variables in envWhiteList.ts are exposed.
 
-- Schema Migrations: Easy-to-manage database versioning.
+- **Admin Guard**: Sensitive routes (Crypto, Delete, Patch) require an x-api-key header matching your API_SEGRETO.
 
-- Relational Thinking: Even in a dashboard, managing data relationships is key.
+- **Bcrypt**: Industrial-standard hashing for all cryptographic operations.
 
-## Security
-- Whitelist Filtering: Only variables explicitly allowed in envWhiteList.ts are exposed via the API.
+---
 
-- Protected Actions: Destructive operations (DELETE) are gated behind admin logic.
+Developed with a "NestJS-ready" mindset.
