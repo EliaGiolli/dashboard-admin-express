@@ -17,6 +17,7 @@ model Log {
   timestamp DateTime @default(now())
   logLevel String
   logMessage String
+  archived Boolean
 }
 
 model System {
@@ -28,11 +29,9 @@ model System {
   cpuUsagePercent Float
 }
 
-model EnvVariable {
-  id        Int      @id @default(autoincrement())
-  key       String   @unique
-  value     String
-  type      String   // Here I will save 'string', 'number' or 'boolean'
-  isPublic  Boolean  @default(false) // If the user wants to show them in the GET /env endpoint
-  updatedAt DateTime @updatedAt
+model AppConfig {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique // "THEME_COLOR", "DASHBOARD_NAME"
+  value String
+  type  String  // 'string', 'number', o 'boolean'
 }

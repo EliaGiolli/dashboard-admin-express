@@ -39,6 +39,7 @@ export type LogMinAggregateOutputType = {
   timestamp: Date | null
   logLevel: string | null
   logMessage: string | null
+  archived: boolean | null
 }
 
 export type LogMaxAggregateOutputType = {
@@ -46,6 +47,7 @@ export type LogMaxAggregateOutputType = {
   timestamp: Date | null
   logLevel: string | null
   logMessage: string | null
+  archived: boolean | null
 }
 
 export type LogCountAggregateOutputType = {
@@ -53,6 +55,7 @@ export type LogCountAggregateOutputType = {
   timestamp: number
   logLevel: number
   logMessage: number
+  archived: number
   _all: number
 }
 
@@ -70,6 +73,7 @@ export type LogMinAggregateInputType = {
   timestamp?: true
   logLevel?: true
   logMessage?: true
+  archived?: true
 }
 
 export type LogMaxAggregateInputType = {
@@ -77,6 +81,7 @@ export type LogMaxAggregateInputType = {
   timestamp?: true
   logLevel?: true
   logMessage?: true
+  archived?: true
 }
 
 export type LogCountAggregateInputType = {
@@ -84,6 +89,7 @@ export type LogCountAggregateInputType = {
   timestamp?: true
   logLevel?: true
   logMessage?: true
+  archived?: true
   _all?: true
 }
 
@@ -178,6 +184,7 @@ export type LogGroupByOutputType = {
   timestamp: Date
   logLevel: string
   logMessage: string
+  archived: boolean
   _count: LogCountAggregateOutputType | null
   _avg: LogAvgAggregateOutputType | null
   _sum: LogSumAggregateOutputType | null
@@ -208,6 +215,7 @@ export type LogWhereInput = {
   timestamp?: Prisma.DateTimeFilter<"Log"> | Date | string
   logLevel?: Prisma.StringFilter<"Log"> | string
   logMessage?: Prisma.StringFilter<"Log"> | string
+  archived?: Prisma.BoolFilter<"Log"> | boolean
 }
 
 export type LogOrderByWithRelationInput = {
@@ -215,6 +223,7 @@ export type LogOrderByWithRelationInput = {
   timestamp?: Prisma.SortOrder
   logLevel?: Prisma.SortOrder
   logMessage?: Prisma.SortOrder
+  archived?: Prisma.SortOrder
 }
 
 export type LogWhereUniqueInput = Prisma.AtLeast<{
@@ -225,6 +234,7 @@ export type LogWhereUniqueInput = Prisma.AtLeast<{
   timestamp?: Prisma.DateTimeFilter<"Log"> | Date | string
   logLevel?: Prisma.StringFilter<"Log"> | string
   logMessage?: Prisma.StringFilter<"Log"> | string
+  archived?: Prisma.BoolFilter<"Log"> | boolean
 }, "id">
 
 export type LogOrderByWithAggregationInput = {
@@ -232,6 +242,7 @@ export type LogOrderByWithAggregationInput = {
   timestamp?: Prisma.SortOrder
   logLevel?: Prisma.SortOrder
   logMessage?: Prisma.SortOrder
+  archived?: Prisma.SortOrder
   _count?: Prisma.LogCountOrderByAggregateInput
   _avg?: Prisma.LogAvgOrderByAggregateInput
   _max?: Prisma.LogMaxOrderByAggregateInput
@@ -247,12 +258,14 @@ export type LogScalarWhereWithAggregatesInput = {
   timestamp?: Prisma.DateTimeWithAggregatesFilter<"Log"> | Date | string
   logLevel?: Prisma.StringWithAggregatesFilter<"Log"> | string
   logMessage?: Prisma.StringWithAggregatesFilter<"Log"> | string
+  archived?: Prisma.BoolWithAggregatesFilter<"Log"> | boolean
 }
 
 export type LogCreateInput = {
   timestamp?: Date | string
   logLevel: string
   logMessage: string
+  archived: boolean
 }
 
 export type LogUncheckedCreateInput = {
@@ -260,12 +273,14 @@ export type LogUncheckedCreateInput = {
   timestamp?: Date | string
   logLevel: string
   logMessage: string
+  archived: boolean
 }
 
 export type LogUpdateInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   logLevel?: Prisma.StringFieldUpdateOperationsInput | string
   logMessage?: Prisma.StringFieldUpdateOperationsInput | string
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type LogUncheckedUpdateInput = {
@@ -273,6 +288,7 @@ export type LogUncheckedUpdateInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   logLevel?: Prisma.StringFieldUpdateOperationsInput | string
   logMessage?: Prisma.StringFieldUpdateOperationsInput | string
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type LogCreateManyInput = {
@@ -280,12 +296,14 @@ export type LogCreateManyInput = {
   timestamp?: Date | string
   logLevel: string
   logMessage: string
+  archived: boolean
 }
 
 export type LogUpdateManyMutationInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   logLevel?: Prisma.StringFieldUpdateOperationsInput | string
   logMessage?: Prisma.StringFieldUpdateOperationsInput | string
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type LogUncheckedUpdateManyInput = {
@@ -293,6 +311,7 @@ export type LogUncheckedUpdateManyInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   logLevel?: Prisma.StringFieldUpdateOperationsInput | string
   logMessage?: Prisma.StringFieldUpdateOperationsInput | string
+  archived?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type LogCountOrderByAggregateInput = {
@@ -300,6 +319,7 @@ export type LogCountOrderByAggregateInput = {
   timestamp?: Prisma.SortOrder
   logLevel?: Prisma.SortOrder
   logMessage?: Prisma.SortOrder
+  archived?: Prisma.SortOrder
 }
 
 export type LogAvgOrderByAggregateInput = {
@@ -311,6 +331,7 @@ export type LogMaxOrderByAggregateInput = {
   timestamp?: Prisma.SortOrder
   logLevel?: Prisma.SortOrder
   logMessage?: Prisma.SortOrder
+  archived?: Prisma.SortOrder
 }
 
 export type LogMinOrderByAggregateInput = {
@@ -318,6 +339,7 @@ export type LogMinOrderByAggregateInput = {
   timestamp?: Prisma.SortOrder
   logLevel?: Prisma.SortOrder
   logMessage?: Prisma.SortOrder
+  archived?: Prisma.SortOrder
 }
 
 export type LogSumOrderByAggregateInput = {
@@ -330,6 +352,10 @@ export type DateTimeFieldUpdateOperationsInput = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type IntFieldUpdateOperationsInput = {
@@ -347,6 +373,7 @@ export type LogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
   timestamp?: boolean
   logLevel?: boolean
   logMessage?: boolean
+  archived?: boolean
 }, ExtArgs["result"]["log"]>
 
 export type LogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -354,6 +381,7 @@ export type LogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extension
   timestamp?: boolean
   logLevel?: boolean
   logMessage?: boolean
+  archived?: boolean
 }, ExtArgs["result"]["log"]>
 
 export type LogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -361,6 +389,7 @@ export type LogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extension
   timestamp?: boolean
   logLevel?: boolean
   logMessage?: boolean
+  archived?: boolean
 }, ExtArgs["result"]["log"]>
 
 export type LogSelectScalar = {
@@ -368,9 +397,10 @@ export type LogSelectScalar = {
   timestamp?: boolean
   logLevel?: boolean
   logMessage?: boolean
+  archived?: boolean
 }
 
-export type LogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "timestamp" | "logLevel" | "logMessage", ExtArgs["result"]["log"]>
+export type LogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "timestamp" | "logLevel" | "logMessage" | "archived", ExtArgs["result"]["log"]>
 
 export type $LogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Log"
@@ -380,6 +410,7 @@ export type $LogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
     timestamp: Date
     logLevel: string
     logMessage: string
+    archived: boolean
   }, ExtArgs["result"]["log"]>
   composites: {}
 }
@@ -807,6 +838,7 @@ export interface LogFieldRefs {
   readonly timestamp: Prisma.FieldRef<"Log", 'DateTime'>
   readonly logLevel: Prisma.FieldRef<"Log", 'String'>
   readonly logMessage: Prisma.FieldRef<"Log", 'String'>
+  readonly archived: Prisma.FieldRef<"Log", 'Boolean'>
 }
     
 

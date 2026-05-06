@@ -4,9 +4,12 @@ import {
     hashPasswordController 
 } from "../controllers/cryptoController.js";
 
+// custom middleware
+import { adminGuard } from "../helpers/authGuard.js";
+
 const cryptoRouter = Router();
 
-cryptoRouter.post('/hash', hashPasswordController);
-cryptoRouter.post('/compare', comparePasswordController);
+cryptoRouter.post('/hash', adminGuard, hashPasswordController);
+cryptoRouter.post('/compare', adminGuard, comparePasswordController);
 
 export default cryptoRouter;

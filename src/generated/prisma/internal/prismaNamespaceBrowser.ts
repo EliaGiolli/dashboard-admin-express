@@ -53,7 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Log: 'Log',
   System: 'System',
-  EnvVariable: 'EnvVariable'
+  AppConfig: 'AppConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -73,7 +73,8 @@ export const LogScalarFieldEnum = {
   id: 'id',
   timestamp: 'timestamp',
   logLevel: 'logLevel',
-  logMessage: 'logMessage'
+  logMessage: 'logMessage',
+  archived: 'archived'
 } as const
 
 export type LogScalarFieldEnum = (typeof LogScalarFieldEnum)[keyof typeof LogScalarFieldEnum]
@@ -91,16 +92,14 @@ export const SystemScalarFieldEnum = {
 export type SystemScalarFieldEnum = (typeof SystemScalarFieldEnum)[keyof typeof SystemScalarFieldEnum]
 
 
-export const EnvVariableScalarFieldEnum = {
+export const AppConfigScalarFieldEnum = {
   id: 'id',
   key: 'key',
   value: 'value',
-  type: 'type',
-  isPublic: 'isPublic',
-  updatedAt: 'updatedAt'
+  type: 'type'
 } as const
 
-export type EnvVariableScalarFieldEnum = (typeof EnvVariableScalarFieldEnum)[keyof typeof EnvVariableScalarFieldEnum]
+export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
 export const SortOrder = {

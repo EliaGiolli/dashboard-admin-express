@@ -1,42 +1,29 @@
-import { type InfoLog } from "../types/infoLog.js";
-import * as fs from 'fs/promises';
+import { prisma } from "../lib/prisma.js"; // Il tuo singleton
+import { type Log as LogModel } from "../generated/prisma/client.js";
 
-//Logger service with OOP
 export class LoggerService {
 
-    constructor(private readonly filePath:string){}
+    async readLogs(): Promise<LogModel[]> {
+        // SELECT * FROM Log
+        return await prisma.log.findMany({
+            orderBy: { timestamp: 'desc' } 
+        });
+    }
 
-    async readLogs(): Promise<InfoLog[]> {
-        try {
-            const data = await fs.readFile(this.filePath, 'utf-8');
-            return JSON.parse(data);
-        } catch (err: any) {
-            if (err.code === 'ENOENT') {
-                // File does not exist, return empty array
-                return [];
+    async writeLogs(logMessage: string, logLevel: string): Promise<LogModel> {
+        // INSERT INTO Log ...
+        return await prisma.log.create({
+            data: {
+                logMessage,
+                logLevel,
             }
-            throw err;
-        }
+        });
     }
 
-    async writeLogs(newLog:InfoLog): Promise<void> {
-
-        const logs = await this.readLogs() ?? [];
-
-        logs.push(newLog);
-
-        await fs.writeFile(this.filePath, JSON.stringify(logs, null, 2), 'utf-8');
-    }
-
-    async deleteLogById(id:string): Promise<InfoLog[]> {
-        const logs = await this.readLogs();
-        const updatedLogs = logs.filter((log: InfoLog) => log.id !== id);
-
-        if (logs.length === updatedLogs.length) {
-            console.warn('No log found with the provided ID');
-        }
-
-        await fs.writeFile(this.filePath, JSON.stringify(updatedLogs, null, 2), 'utf-8');
-        return updatedLogs;
+    async deleteLogById(id: number): Promise<void> {
+        // DELETE FROM Log WHERE id = id
+        await prisma.log.delete({
+            where: { id }
+        });
     }
 }

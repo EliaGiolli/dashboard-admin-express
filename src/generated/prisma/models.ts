@@ -10,5 +10,5 @@
  */
 export type * from './models/Log.js'
 export type * from './models/System.js'
-export type * from './models/EnvVariable.js'
+export type * from './models/AppConfig.js'
 export type * from './commonInputTypes.js'

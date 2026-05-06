@@ -28,7 +28,7 @@ export type Log = Prisma.LogModel
  */
 export type System = Prisma.SystemModel
 /**
- * Model EnvVariable
+ * Model AppConfig
  * 
  */
-export type EnvVariable = Prisma.EnvVariableModel
+export type AppConfig = Prisma.AppConfigModel

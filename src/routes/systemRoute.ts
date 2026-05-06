@@ -1,9 +1,14 @@
 import { Router } from "express";
-import { handleSystemStats } from "../controllers/systemController.js";
+import { 
+    getSystemStats, 
+    recordCurrentStats, 
+    patchSystemSettings 
+} from "../controllers/systemController.js";
 
 const systemRouter = Router();
 
-systemRouter.get('/', handleSystemStats);
-
+systemRouter.get('/', getSystemStats);
+systemRouter.post('/record', recordCurrentStats);
+systemRouter.patch('/settings', patchSystemSettings);
 
 export default systemRouter;

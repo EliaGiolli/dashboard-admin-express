@@ -386,7 +386,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Log: 'Log',
   System: 'System',
-  EnvVariable: 'EnvVariable'
+  AppConfig: 'AppConfig'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "log" | "system" | "envVariable"
+    modelProps: "log" | "system" | "appConfig"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -554,77 +554,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    EnvVariable: {
-      payload: Prisma.$EnvVariablePayload<ExtArgs>
-      fields: Prisma.EnvVariableFieldRefs
+    AppConfig: {
+      payload: Prisma.$AppConfigPayload<ExtArgs>
+      fields: Prisma.AppConfigFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.EnvVariableFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload> | null
+          args: Prisma.AppConfigFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.EnvVariableFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>
+          args: Prisma.AppConfigFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         findFirst: {
-          args: Prisma.EnvVariableFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload> | null
+          args: Prisma.AppConfigFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.EnvVariableFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>
+          args: Prisma.AppConfigFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         findMany: {
-          args: Prisma.EnvVariableFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>[]
+          args: Prisma.AppConfigFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
         }
         create: {
-          args: Prisma.EnvVariableCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>
+          args: Prisma.AppConfigCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         createMany: {
-          args: Prisma.EnvVariableCreateManyArgs<ExtArgs>
+          args: Prisma.AppConfigCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.EnvVariableCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>[]
+          args: Prisma.AppConfigCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
         }
         delete: {
-          args: Prisma.EnvVariableDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>
+          args: Prisma.AppConfigDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         update: {
-          args: Prisma.EnvVariableUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>
+          args: Prisma.AppConfigUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         deleteMany: {
-          args: Prisma.EnvVariableDeleteManyArgs<ExtArgs>
+          args: Prisma.AppConfigDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.EnvVariableUpdateManyArgs<ExtArgs>
+          args: Prisma.AppConfigUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.EnvVariableUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>[]
+          args: Prisma.AppConfigUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
         }
         upsert: {
-          args: Prisma.EnvVariableUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$EnvVariablePayload>
+          args: Prisma.AppConfigUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         aggregate: {
-          args: Prisma.EnvVariableAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateEnvVariable>
+          args: Prisma.AppConfigAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppConfig>
         }
         groupBy: {
-          args: Prisma.EnvVariableGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.EnvVariableGroupByOutputType>[]
+          args: Prisma.AppConfigGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppConfigGroupByOutputType>[]
         }
         count: {
-          args: Prisma.EnvVariableCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.EnvVariableCountAggregateOutputType> | number
+          args: Prisma.AppConfigCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppConfigCountAggregateOutputType> | number
         }
       }
     }
@@ -668,7 +668,8 @@ export const LogScalarFieldEnum = {
   id: 'id',
   timestamp: 'timestamp',
   logLevel: 'logLevel',
-  logMessage: 'logMessage'
+  logMessage: 'logMessage',
+  archived: 'archived'
 } as const
 
 export type LogScalarFieldEnum = (typeof LogScalarFieldEnum)[keyof typeof LogScalarFieldEnum]
@@ -686,16 +687,14 @@ export const SystemScalarFieldEnum = {
 export type SystemScalarFieldEnum = (typeof SystemScalarFieldEnum)[keyof typeof SystemScalarFieldEnum]
 
 
-export const EnvVariableScalarFieldEnum = {
+export const AppConfigScalarFieldEnum = {
   id: 'id',
   key: 'key',
   value: 'value',
-  type: 'type',
-  isPublic: 'isPublic',
-  updatedAt: 'updatedAt'
+  type: 'type'
 } as const
 
-export type EnvVariableScalarFieldEnum = (typeof EnvVariableScalarFieldEnum)[keyof typeof EnvVariableScalarFieldEnum]
+export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -734,6 +733,13 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'BigInt'
  */
 export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
@@ -744,13 +750,6 @@ export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 /**
@@ -865,7 +864,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   log?: Prisma.LogOmit
   system?: Prisma.SystemOmit
-  envVariable?: Prisma.EnvVariableOmit
+  appConfig?: Prisma.AppConfigOmit
 }
 
 /* Types for Logging */
