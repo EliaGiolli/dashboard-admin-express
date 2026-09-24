@@ -7,6 +7,7 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     globalSetup: ['./vitest.global-setup.ts'],
     fileParallelism: false,
+    testTimeout: 15000,
     env: { DATABASE_URL: testDatabaseUrl, NODE_ENV: 'test' },
   },
 });

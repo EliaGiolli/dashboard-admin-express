@@ -1,29 +1,34 @@
 import os from 'node:os';
-import { prisma } from "../../core/prisma.js";
-import { type System as SystemModel } from "../../generated/prisma/client.js";
+import type { SystemSample } from '@pc-monitor/shared';
+import { prisma } from '../../core/prisma.js';
+import type { System as SystemModel } from '../../generated/prisma/client.js';
 
-// Save the current state inside the DB.
-export async function saveCurrentSystemStats(): Promise<SystemModel> {
-    const totalMem = os.totalmem();
-    const freeMem = os.freemem();
-    
-    return await prisma.system.create({
-        data: {
-            uptime: Math.floor(os.uptime()),
-            totalMemory: totalMem,
-            freeMemory: freeMem,
-            cpuUsagePercent: Math.round(Math.random() * 100), 
-            createdAt: new Date()
-        }
-    });
+// BigInt columns are not JSON-serializable, so memory values are exposed as numbers.
+function toSample(row: SystemModel): SystemSample {
+  return {
+    id: row.id,
+    createdAt: row.createdAt.toISOString(),
+    uptime: row.uptime,
+    totalMemory: Number(row.totalMemory),
+    freeMemory: Number(row.freeMemory),
+    cpuUsagePercent: row.cpuUsagePercent,
+  };
 }
 
-// It reads the history from the DB.
-export async function getSystemHistory(): Promise<SystemModel[]> {
-    return await prisma.system.findMany({
-        take: 20,
-        orderBy: {
-            createdAt: 'desc'
-        }
-    });
+export async function saveCurrentSystemStats(): Promise<SystemSample> {
+  const row = await prisma.system.create({
+    data: {
+      uptime: Math.floor(os.uptime()),
+      totalMemory: os.totalmem(),
+      freeMemory: os.freemem(),
+      cpuUsagePercent: Math.round(Math.random() * 100),
+      createdAt: new Date(),
+    },
+  });
+  return toSample(row);
+}
+
+export async function getSystemHistory(): Promise<SystemSample[]> {
+  const rows = await prisma.system.findMany({ take: 20, orderBy: { createdAt: 'desc' } });
+  return rows.map(toSample);
 }
