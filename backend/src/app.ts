@@ -14,10 +14,11 @@ import { globalErrorHandler } from './middlewares/errorHandler.js';
 const app = express();
 app.use(express.json());
 
-// Define routes
-app.use('/env', envRouter);
-app.use('/system', systemRouter);
-app.use('/logs', loggerRouter);
+const api = express.Router();
+api.use('/env', envRouter);
+api.use('/system', systemRouter);
+api.use('/logs', loggerRouter);
+app.use('/api', api);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   next(new AppError(`Route not found: ${req.method} ${req.path}`, 404));
