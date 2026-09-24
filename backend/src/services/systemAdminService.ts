@@ -2,8 +2,6 @@ import os from 'node:os';
 import { prisma } from "../lib/prisma.js";
 import { type System as SystemModel } from "../generated/prisma/client.js";
 
-const serverStartTime = Date.now();
-
 // Save the current state inside the DB.
 export async function saveCurrentSystemStats(): Promise<SystemModel> {
     const totalMem = os.totalmem();
@@ -14,7 +12,6 @@ export async function saveCurrentSystemStats(): Promise<SystemModel> {
             uptime: Math.floor(os.uptime()),
             totalMemory: totalMem,
             freeMemory: freeMem,
-            serverUpTime: Date.now() - serverStartTime,
             cpuUsagePercent: Math.round(Math.random() * 100), 
             createdAt: new Date()
         }

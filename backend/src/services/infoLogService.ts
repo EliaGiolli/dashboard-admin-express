@@ -16,6 +16,7 @@ export class LoggerService {
             data: {
                 logMessage,
                 logLevel,
+                archived: false,
             }
         });
     }

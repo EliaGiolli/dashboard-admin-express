@@ -16,7 +16,7 @@ export async function updateEnvController(req: Request, res: Response, next:Next
     const { key } = req.params; // es. "THEME_COLOR"
     const { value } = req.body;   //The new color
 
-    if (!key) {
+    if (typeof key !== 'string' || !key) {
         return next(new AppError('Missing configuration key', 400));
     }
 
