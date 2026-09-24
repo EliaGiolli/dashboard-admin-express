@@ -24,6 +24,19 @@ prisma/          schema + migrations
 
 `src/app.ts` builds the Express app (everything under `/api`), `src/server.ts` starts it. `architecture.test.ts` fails if a feature imports another feature's internals.
 
+## Why feature-based instead of MVC
+
+The original project was layered MVC: top-level `controllers/`, `services/`, `routes/`, `types/`. We reorganized it by feature (`features/logs`, `features/metrics`, ...) for these reasons:
+
+- **Cohesion:** everything about one capability (route, controller, service, types, tests) lives in one folder. Adding or changing "logs" touches one place instead of four folders.
+- **Maintainability:** a feature can be understood, tested, changed or deleted on its own. Removing crypto was a matter of deleting files, not hunting through every layer.
+- **Scalability:** in MVC every layer folder keeps growing with the whole app. Here each feature grows independently, and new features are added without touching existing ones.
+- **Explicit boundaries:** a feature exposes only its `index.ts`, and `architecture.test.ts` fails the build if another feature reaches into its internals. MVC folders don't enforce any boundary between unrelated code.
+- **Familiar shape:** it mirrors how modern frameworks structure apps: NestJS groups code into per-feature modules, and package-by-feature is a common convention in Spring Boot projects.
+- **Shared types end to end:** feature folders map cleanly onto the `shared/` schemas and the frontend `features/`, so backend and frontend stay aligned.
+
+Trade-off: a very small app doesn't need this much structure, and MVC is simpler to start with. Here the app has several distinct capabilities (metrics, actions, logs, config) and a frontend that mirrors them, so the extra structure pays off.
+
 ## Scripts
 
 | Command | What it does |
