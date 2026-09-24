@@ -1,30 +1,8 @@
-import express from 'express';
-import {
-  type Request,
-  type Response,
-  type NextFunction,
-} from 'express';
+import 'dotenv/config';
+import app from './app.js';
 
-import envRouter from './routes/safeEnvRoute.js';
-import loggerRouter from './routes/loggerRoute.js';
-import cryptoRouter from './routes/cryptoRoute.js';
-import systemRouter from './routes/systemRoute.js';
-import { globalErrorHandler } from './middlewares/errorHandler.js';
+const PORT = process.env.PORT || 3000;
 
-const app = express();
-app.use(express.json());
-
-// Define routes
-app.use('/env', envRouter);
-app.use('/system', systemRouter);
-app.use('/crypto', cryptoRouter);
-app.use('/logs', loggerRouter);
-app.use('/:id', loggerRouter);
-
-// Error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  globalErrorHandler(err, req, res,next);
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
-
-export default app;
