@@ -1,32 +1,14 @@
 {
-  "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "bcrypt": "^6.0.0",
-    "dotenv": "^17.4.2",
-    "express": "^5.1.0",
-    "nodemon": "^3.1.10"
-  },
-  "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.12.2",
-    "prisma": "^7.8.0",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.2"
-  },
-  "name": "dashboard",
+  "name": "pc-monitor",
+  "private": true,
   "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
+  "workspaces": [
+    "backend"
+  ],
   "scripts": {
-    "dev": "nodemon dist/index.js",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": ""
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
 }

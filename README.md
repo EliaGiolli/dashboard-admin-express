@@ -1,131 +1,47 @@
-# Dev Dashboard REST API (Database Edition) 🚀
-A REST API designed to simulate a developer/admin dashboard. This project has evolved from a simple **Express** server to a full-blown database-driven application using **Prisma** and **SQLite3**, making it perfect for learning how to build scalable backends with persistent data.
+# PC Monitor
 
-## 🌟 Main Features
-### 1. System Monitoring (Historical Data)
-**Persistence**: Snapshotting CPU, RAM, and uptime into SQLite to track system health trends via Prisma.
+A local Windows app that shows live PC performance charts (CPU, RAM, disk, network, processes) and offers buttons that run fix scripts (kill a process, clear temp files, flush DNS, empty the recycle bin).
 
-- `GET /system` – Fetch historical performance stats.
+Built on top of an earlier Express + Prisma admin dashboard API, restructured as a TypeScript monorepo with a feature-based design:
 
-- `POST /system/record` – Force an immediate system snapshot.
+- `backend/`: Express 5, Prisma + SQLite, WebSocket live stats, PowerShell fix actions, Swagger docs
+- `frontend/`: React + Vite dashboard (planned)
+- `shared/`: zod schemas and types shared by both (planned)
 
-- `PATCH /system/settings` – Update monitoring thresholds.
+> **Status:** work in progress. The backend is being reworked first; the frontend starts once the backend is fully tested.
 
-### 2. Advanced Log Management
-**Persistent Storage**: Logs are stored with metadata, allowing for archiving and level-based filtering (info, warning, error).
+## Warning
 
-- `GET /logs` – Fetch all logs from DB.
+This app runs local scripts that **modify your system**: it can terminate processes, delete the contents of your temp folders, flush the DNS cache and empty the Recycle Bin. Read the scripts under `backend/src/**/scripts/` before running it. Risky actions ask for confirmation, but they cannot be undone.
 
-- `POST /logs` – Write a new log entry.
+It is designed to run on your own machine only: the server binds to `127.0.0.1` and has no login. Do not expose it to a network.
 
-- `PATCH /logs/:id` – Update log status (e.g., archived: true).
+## Getting started
 
-- `DELETE /logs/:id` – Permanent removal of a log entry.
+Requirements: Node.js 22+ and Windows (PowerShell).
 
-### 3. Cryptography and Hash Testing
-**Security Suite**: Built-in CryptoService for hashing and verifying strings using bcrypt.
-
-- `POST /crypto/hash` – Generate a secure hash.
-
-- `POST /crypto/compare` – Validate plain text against a hash.
-
-### 4. Hybrid Environment Management
-**Safe Exposure**: Combines static .env variables (via whitelist) with dynamic configurations stored in the database.
-
-- `GET /env` – Returns safe env variables and DB configs (like THEME_COLOR).
-
-- `PATCH /env/:key` – Update dynamic settings in the database.
-
----
-
-## 🛡️ Global Error Handling (The "NestJS" Way)
-In this version, I moved away from manual `res.status().json()` calls inside controllers. I implemented a Centralized Error Layer, which is the standard approach in enterprise frameworks like NestJS.
-
-### Why this approach?
-- **Consistency**: Every error response follows the same schema.
-
-- **Clean Controllers**: Controllers only focus on the "Happy Path". If something goes wrong, they just "throw" the error forward.
-
-- **Future Proof**: This mirrors NestJS Exception Filters, making the transition to that framework much smoother.
-
-### How it works (Code Reference)
-**The Custom Class (appError.ts)**: Extends the native `Error` class to include a statusCode.
-
-```TypeScript
-export class AppError extends Error {
-    constructor(public message: string, public statusCode: number) {
-        super(message);
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
-```
-
-**The Middleware (errorHandler.ts)**: A global "catcher" registered at the end of the pipeline.
-
-```TypeScript
-export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-    res.status(err.statusCode || 500).json({
-        status: 'error',
-        message: err.message || 'Internal Server Error',
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-    });
-};
-```
-Usage in Controller:
-
-```TypeScript
-// If something fails, we just call next()
-catch (error) {
-    next(new AppError('Database connection failed', 500));
-}
-```
----
-
-## 🏗️ Project Structure
-```bash
-dashboard/
-├── prisma/               # Database Schema (SQLite)
-├── src/
-│   ├── controllers/      # Lean Route Handlers (Request/Response logic)
-│   ├── generated/prisma/ # Type-safe DB Client
-│   ├── helpers/          # AppError class, Env Whitelist, Parsers
-│   ├── lib/              # Prisma Client Singleton
-│   ├── middlewares/      # AuthGuard & Global Error Handler
-│   ├── routes/           # Express Route definitions
-│   ├── services/         # Business Logic (DB interactions, OS logic)
-│   ├── types/            # TS Interfaces
-│   └── server.ts         # App configuration & Middleware registration
-```
----
-
-## 🚀 Getting Started
-### 1. Installation
 ```bash
 git clone https://github.com/EliaGiolli/dashboard-admin-express.git
+cd dashboard-admin-express
 npm install
 ```
 
-### 2. Database Setup
-Ensure your .env contains: `DATABASE_URL="file:./dev.db" and API_SEGRETO="your_secret"`.
+Create `backend/.env`:
 
-```bash
-npx prisma generate  # Sync TypeScript types
-npx prisma db push   # Sync SQLite database
+```
+DATABASE_URL="file:./dev.db"
+API_SEGRETO="your_secret"
 ```
 
-### 3. Run
+Then, from `backend/`:
+
 ```bash
-npm run dev # Hot-reload enabled
+npx prisma generate
+npx prisma db push
 ```
----
 
-## 🔐 Security
-- **Whitelist Filtering**: Only variables in envWhiteList.ts are exposed.
+```bash
+npm run dev
+```
 
-- **Admin Guard**: Sensitive routes (Crypto, Delete, Patch) require an x-api-key header matching your API_SEGRETO.
-
-- **Bcrypt**: Industrial-standard hashing for all cryptographic operations.
-
----
-
-Developed with a "NestJS-ready" mindset.
+The dev, build and test scripts are being rebuilt in phase B1, so they may not work yet.
