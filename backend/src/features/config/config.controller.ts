@@ -1,6 +1,6 @@
-import { AppError } from "../helpers/appError.js";
-import { prisma } from "../lib/prisma.js";
-import { getSafeEnv } from "../services/getSafeEnv.js";
+import { AppError } from "../../core/errors/appError.js";
+import { prisma } from "../../core/prisma.js";
+import { getSafeEnv } from "./config.service.js";
 import { type Response, type Request, type NextFunction } from "express";
 
 export async function getSafeEnvController(req:Request, res:Response, next:NextFunction){

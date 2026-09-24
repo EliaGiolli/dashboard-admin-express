@@ -5,12 +5,12 @@ import {
   type NextFunction,
 } from 'express';
 
-import envRouter from './routes/safeEnvRoute.js';
-import loggerRouter from './routes/loggerRoute.js';
-import systemRouter from './routes/systemRoute.js';
+import envRouter from './features/config/config.routes.js';
+import loggerRouter from './features/logs/logs.routes.js';
+import systemRouter from './features/metrics/metrics.routes.js';
 import { healthRouter } from './features/health/index.js';
-import { AppError } from './helpers/appError.js';
-import { globalErrorHandler } from './middlewares/errorHandler.js';
+import { AppError } from './core/errors/appError.js';
+import { globalErrorHandler } from './core/errors/errorHandler.js';
 
 const app = express();
 app.use(express.json());

@@ -1,7 +1,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { getSystemHistory, saveCurrentSystemStats } from '../services/systemAdminService.js';
-import { prisma } from '../lib/prisma.js';
-import { AppError } from '../helpers/appError.js';
+import { getSystemHistory, saveCurrentSystemStats } from './metrics.service.js';
+import { prisma } from '../../core/prisma.js';
+import { AppError } from '../../core/errors/appError.js';
 
 export const getSystemStats = async (req: Request, res: Response, next:NextFunction) => {
     try {

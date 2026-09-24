@@ -1,5 +1,5 @@
-import { getSafeEnvController } from "../controllers/safeEnvController.js";
-import { updateEnvController } from '../controllers/safeEnvController.js';
+import { getSafeEnvController } from "./config.controller.js";
+import { updateEnvController } from './config.controller.js';
 import { Router } from "express";
 
 const envRouter = Router();

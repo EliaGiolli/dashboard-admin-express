@@ -1,6 +1,6 @@
 import os from 'node:os';
-import { prisma } from "../lib/prisma.js";
-import { type System as SystemModel } from "../generated/prisma/client.js";
+import { prisma } from "../../core/prisma.js";
+import { type System as SystemModel } from "../../generated/prisma/client.js";
 
 // Save the current state inside the DB.
 export async function saveCurrentSystemStats(): Promise<SystemModel> {

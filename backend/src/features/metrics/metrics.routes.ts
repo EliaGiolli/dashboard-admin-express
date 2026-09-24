@@ -3,7 +3,7 @@ import {
     getSystemStats, 
     recordCurrentStats, 
     patchSystemSettings 
-} from "../controllers/systemController.js";
+} from "./metrics.controller.js";
 
 const systemRouter = Router();
 

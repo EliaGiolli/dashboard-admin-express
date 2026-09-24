@@ -4,7 +4,7 @@ import {
     writeLogsController,
     deleteLogsController,
     patchLogController 
-} from "../controllers/infoLogController.js";
+} from "./logs.controller.js";
 
 const loggerRouter = Router();
 

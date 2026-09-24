@@ -1,5 +1,5 @@
-import { envWhitelist } from "../helpers/envWhiteList.js";
-import { parseEnvVariable } from "../helpers/parseEnvVariable.js";
+import { envWhitelist } from "./envWhitelist.js";
+import { parseEnvVariable } from "./parseEnvVariable.js";
 
 // This function returns only the environment variables that are considered "safe" (whitelisted)
 export function getSafeEnv() {
