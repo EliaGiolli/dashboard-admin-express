@@ -8,7 +8,7 @@ REST + WebSocket API that collects PC metrics, stores them and runs fix scripts.
 
 ## Stack
 
-Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, Vitest + Supertest, `tsx`. Planned: `systeminformation`, `ws`, zod + Swagger UI.
+Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, zod (via `@pc-monitor/shared`), Vitest + Supertest, `tsx`. Planned: `systeminformation`, `ws`, Swagger UI.
 
 ## Structure
 
@@ -22,7 +22,7 @@ src/
 prisma/          schema + migrations
 ```
 
-`src/app.ts` builds the Express app (everything under `/api`), `src/server.ts` starts it. `architecture.test.ts` fails if a feature imports another feature's internals.
+`src/app.ts` builds the Express app (everything under `/api`), `src/server.ts` starts it. `architecture.test.ts` fails if a feature imports another feature's internals. Request validation uses zod schemas from `@pc-monitor/shared` through the `validate()` middleware (`core/validation`); tests run against a throwaway SQLite database created with `prisma migrate deploy`.
 
 ## Why feature-based instead of MVC
 
@@ -46,6 +46,7 @@ Trade-off: a very small app doesn't need this much structure, and MVC is simpler
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` / `npm start` | compile to `dist/` and run it |
 | `npx prisma generate` | generate the Prisma client |
-| `npx prisma migrate dev` | apply schema changes |
+| `npx prisma migrate deploy` | create/update the database from the migrations |
+| `npx prisma migrate dev` | create a new migration after a schema change |
 
 API docs will be served at `http://127.0.0.1:4317/api/docs` *(planned)*.

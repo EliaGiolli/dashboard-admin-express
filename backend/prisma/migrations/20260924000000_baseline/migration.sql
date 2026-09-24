@@ -3,7 +3,8 @@ CREATE TABLE "Log" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "timestamp" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "logLevel" TEXT NOT NULL,
-    "logMessage" TEXT NOT NULL
+    "logMessage" TEXT NOT NULL,
+    "archived" BOOLEAN NOT NULL
 );
 
 -- CreateTable
@@ -17,14 +18,13 @@ CREATE TABLE "System" (
 );
 
 -- CreateTable
-CREATE TABLE "EnvVariable" (
+CREATE TABLE "AppConfig" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "isPublic" BOOLEAN NOT NULL DEFAULT false,
-    "updatedAt" DATETIME NOT NULL
+    "type" TEXT NOT NULL
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "EnvVariable_key_key" ON "EnvVariable"("key");
+CREATE UNIQUE INDEX "AppConfig_key_key" ON "AppConfig"("key");
+

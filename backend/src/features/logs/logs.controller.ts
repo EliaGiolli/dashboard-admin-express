@@ -1,66 +1,50 @@
-import { AppError } from "../../core/errors/appError.js";
-import { prisma } from "../../core/prisma.js";
-import { LoggerService } from "./logs.service.js";
-import { type Response, type Request, type NextFunction } from "express";
+import type { CreateLog, LogIdParams, UpdateLog } from '@pc-monitor/shared';
+import type { NextFunction, Request, Response } from 'express';
+import { AppError } from '../../core/errors/appError.js';
+import { isRecordNotFound } from '../../core/errors/prismaErrors.js';
+import { LoggerService } from './logs.service.js';
 
 const logService = new LoggerService();
 
-// GET
-export async function getLogsController(req: Request, res: Response, next: NextFunction) {
-    try {
-        const logs = await logService.readLogs();
-        res.status(200).json(logs);
-    } catch (err) {
-        next(new AppError('Unable to fetch logs from database', 500));
-    }
+function toAppError(err: unknown, id: number, fallback: string): AppError {
+  return isRecordNotFound(err)
+    ? new AppError(`Log ${id} not found`, 404)
+    : new AppError(fallback, 500);
 }
 
-// POST
+export async function getLogsController(_req: Request, res: Response, next: NextFunction) {
+  try {
+    res.status(200).json(await logService.readLogs());
+  } catch {
+    next(new AppError('Unable to fetch logs from database', 500));
+  }
+}
+
 export async function writeLogsController(req: Request, res: Response, next: NextFunction) {
-  
-    const { logMessage, logLevel } = req.body;
-    
-    if (!logMessage || !logLevel) {
-        return next(new AppError('Missing logMessage or logLevel', 400));
-    }
-
-    try {
-        const newLog = await logService.writeLogs(logMessage, logLevel);
-        res.status(201).json({ message: 'Log created', newLog });
-    } catch (err) {
-        next(new AppError('Unable to save the log', 500))
-    }
+  try {
+    const newLog = await logService.writeLogs(req.body as CreateLog);
+    res.status(201).json({ message: 'Log created', newLog });
+  } catch {
+    next(new AppError('Unable to save the log', 500));
+  }
 }
 
-// DELETE
 export async function deleteLogsController(req: Request, res: Response, next: NextFunction) {
-    const id = req.params.id;
-
-    if (!id) {
-        return next(new AppError('Missing log id parameter', 400));
-    }
-
-    try {
-        // SQlite usually uses only numeric IDs (Int), we should cast the string from the params
-        await logService.deleteLogById(Number(id));
-        res.status(200).json({ message: 'Log deleted successfully' });
-    } catch (err) {
-        next(new AppError('Unable to delete the log', 500));
-    }
+  const { id } = req.params as unknown as LogIdParams;
+  try {
+    await logService.deleteLogById(id);
+    res.status(200).json({ message: 'Log deleted successfully' });
+  } catch (err) {
+    next(toAppError(err, id, 'Unable to delete the log'));
+  }
 }
 
-// PATCH
-export async function patchLogController(req: Request, res: Response, next:NextFunction) {
-    const { id } = req.params;
-    const { archived } = req.body; 
-
-    try {
-        const updatedLog = await prisma.log.update({
-            where: { id: Number(id) },
-            data: { archived: Boolean(archived) }
-        });
-        res.status(200).json(updatedLog);
-    } catch (err) {
-        next(new AppError('Unable to update the log', 500))
-    }
+export async function patchLogController(req: Request, res: Response, next: NextFunction) {
+  const { id } = req.params as unknown as LogIdParams;
+  const { archived } = req.body as UpdateLog;
+  try {
+    res.status(200).json(await logService.setArchived(id, archived));
+  } catch (err) {
+    next(toAppError(err, id, 'Unable to update the log'));
+  }
 }

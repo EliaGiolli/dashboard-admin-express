@@ -27,7 +27,7 @@ npm workspaces monorepo, TypeScript strict everywhere, feature-based design in e
 
 ```
 pc-monitor/
-├── shared/     zod schemas + types shared by both sides (planned)
+├── shared/     zod schemas + types shared by backend and frontend
 ├── backend/    Express 5 + Prisma/SQLite + WebSocket
 └── frontend/   React + Vite dashboard (planned)
 ```
@@ -65,9 +65,9 @@ cd dashboard-admin-express
 npm install
 ```
 
-Copy `backend/.env.example` to `backend/.env` and set the values, then from `backend/` run `npx prisma generate` and `npx prisma db push`.
+Copy `backend/.env.example` to `backend/.env` and set the values, then from `backend/` run `npx prisma generate` and `npx prisma migrate deploy` (creates the SQLite database).
 
 ```bash
 npm run dev    # from the repo root: starts the backend
-npm test       # backend tests
+npm test       # builds shared, then runs the backend tests
 ``` See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for package details.

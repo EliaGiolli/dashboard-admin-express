@@ -7,10 +7,10 @@ The project extends the user's existing repo `EliaGiolli/dashboard-admin-express
 
 ## Workflow (one task at a time, one PR per phase)
 A "phase" is a section of `TASKS.md` (S, B1..B10, F1..F5). Commits are per task; branches and PRs are per phase, so the repo isn't flooded with PRs.
-1. Pick the first unchecked task. Backend tasks (`B-*`) come first; do not start any `F-*` task until `B-58` is done and the user has given the go-ahead.
+1. Pick the first unchecked task. Backend tasks (`B-*`) come first; do not start any `F-*` task until `B-63` is done and the user has given the go-ahead.
 2. At the start of a phase, create a branch off up-to-date `main`: `git switch -c <phase>-<short-slug>` (e.g. `b4-database`). Stay on it for every task in that phase.
 3. Implement only the current task. Keep the change small.
-4. Test: `npm test` and `npx tsc --noEmit` (add tests with the task; HTTP tests use Supertest). Endpoints are also verified in Swagger UI (`/api/docs`) once B9 exists.
+4. Test: `npm test` and `npx tsc --noEmit` (add tests with the task; HTTP tests use Supertest). Once B3 exists, every new or changed route must be documented in Swagger in the same task (a test fails if a mounted route is missing from the spec), and each phase ends with a check in Swagger UI (`/api/docs`): tell the user which endpoints to try.
 5. Tick the task in `TASKS.md` (not committed, since it's gitignored).
 6. Commit with a message starting with the task id, e.g. `B-21: add sample service`. Never use `--no-verify`.
 7. Push the phase branch after each task or at least at phase end (`git push -u origin <branch>`).
