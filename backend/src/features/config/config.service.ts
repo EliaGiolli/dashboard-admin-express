@@ -1,24 +1,34 @@
-import { envWhitelist } from "./envWhitelist.js";
-import { parseEnvVariable } from "./parseEnvVariable.js";
+import type { AppConfig, ConfigValueType, SafeEnv } from '@pc-monitor/shared';
+import { AppError } from '../../core/errors/appError.js';
+import { prisma } from '../../core/prisma.js';
+import { envWhitelist } from './envWhitelist.js';
+import { parseEnvVariable } from './parseEnvVariable.js';
 
-// This function returns only the environment variables that are considered "safe" (whitelisted)
-export function getSafeEnv() {
-  
-  const result: Record<string, string | number | boolean | undefined> = {};
-
-  for(const key in envWhitelist) {
-    // Get the expected type for this variable (string, number, or boolean)
+// Returns only the whitelisted environment variables, converted to their declared type.
+export function getSafeEnv(): SafeEnv {
+  const result: SafeEnv = {};
+  for (const key in envWhitelist) {
     const type = envWhitelist[key];
-    if (type !== undefined) {
-      // Parse and assign the environment variable to the result object, 
-      // converting it to the correct type
-      result[key] = parseEnvVariable(process.env[key], type);
-    } else {
-      // If the type is not defined in the whitelist, set the value as undefined
-      result[key] = undefined;
-    }
+    if (type === undefined) continue;
+    const value = parseEnvVariable(process.env[key], type);
+    if (value !== undefined) result[key] = value;
   }
-
-  // Return the object containing only the safe, parsed environment variables
   return result;
+}
+
+function isValidForType(value: string, type: ConfigValueType): boolean {
+  if (type === 'number') return value.trim() !== '' && Number.isFinite(Number(value));
+  if (type === 'boolean') return value === 'true' || value === 'false';
+  return true;
+}
+
+export async function updateConfigValue(key: string, value: string): Promise<AppConfig> {
+  const existing = await prisma.appConfig.findUnique({ where: { key } });
+  if (!existing) throw new AppError(`Configuration key ${key} not found`, 404);
+
+  const type = existing.type as ConfigValueType;
+  if (!isValidForType(value, type)) {
+    throw new AppError(`Value for ${key} must be a valid ${type}`, 400);
+  }
+  return (await prisma.appConfig.update({ where: { key }, data: { value } })) as AppConfig;
 }
