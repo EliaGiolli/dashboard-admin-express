@@ -7,7 +7,6 @@ import {
 
 import envRouter from './routes/safeEnvRoute.js';
 import loggerRouter from './routes/loggerRoute.js';
-import cryptoRouter from './routes/cryptoRoute.js';
 import systemRouter from './routes/systemRoute.js';
 import { AppError } from './helpers/appError.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
@@ -18,7 +17,6 @@ app.use(express.json());
 // Define routes
 app.use('/env', envRouter);
 app.use('/system', systemRouter);
-app.use('/crypto', cryptoRouter);
 app.use('/logs', loggerRouter);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
