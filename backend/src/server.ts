@@ -1,5 +1,4 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import {
   type Request,
   type Response,
@@ -11,9 +10,6 @@ import loggerRouter from './routes/loggerRoute.js';
 import cryptoRouter from './routes/cryptoRoute.js';
 import systemRouter from './routes/systemRoute.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
-
-// Load env before anything else
-dotenv.config({ path: '../.env' });
 
 const app = express();
 app.use(express.json());
