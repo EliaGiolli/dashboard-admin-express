@@ -1,24 +1,63 @@
 # PC Monitor
 
-A local Windows app that shows live PC performance charts (CPU, RAM, disk, network, processes) and offers buttons that run fix scripts (kill a process, clear temp files, flush DNS, empty the recycle bin).
+Live PC performance charts and one-click fix scripts, all running locally on your Windows machine.
 
-Built on top of an earlier Express + Prisma admin dashboard API, restructured as a TypeScript monorepo with a feature-based design:
+<p>
+  <img src="https://skillicons.dev/icons?i=ts,nodejs,express,prisma,sqlite,react,vite,powershell,git,github" alt="tech stack" />
+</p>
 
-- `backend/`: Express 5, Prisma + SQLite, WebSocket live stats, PowerShell fix actions, Swagger docs
-- `frontend/`: React + Vite dashboard (planned)
-- `shared/`: zod schemas and types shared by both (planned)
+> **Status:** work in progress. The backend is being reworked first; the frontend starts once the backend is fully tested. Items marked *(planned)* don't exist yet.
 
-> **Status:** work in progress. The backend is being reworked first; the frontend starts once the backend is fully tested.
+## What it does
+
+- **Monitor** *(planned)*: CPU (total, per core, temperature), RAM, disk usage and I/O, network throughput and a live process table, streamed over WebSocket every 2 seconds and stored in SQLite so history survives restarts.
+- **Fix** *(planned)*: buttons that run PowerShell scripts: kill a process, clear temp files, flush the DNS cache, empty the Recycle Bin. Risky actions need confirmation, enforced by the server.
+- **Log** *(planned)*: every action run and every threshold alert (for example CPU above its limit) is written to a searchable log.
+- **Document** *(planned)*: every endpoint is described in Swagger UI.
 
 ## Warning
 
-This app runs local scripts that **modify your system**: it can terminate processes, delete the contents of your temp folders, flush the DNS cache and empty the Recycle Bin. Read the scripts under `backend/src/**/scripts/` before running it. Risky actions ask for confirmation, but they cannot be undone.
+This app runs local scripts that **modify your system**: it can terminate processes, delete the contents of your temp folders, flush the DNS cache and empty the Recycle Bin. Read the scripts under `backend/src/features/actions/scripts/` before running it. Some actions cannot be undone.
 
-It is designed to run on your own machine only: the server binds to `127.0.0.1` and has no login. Do not expose it to a network.
+It is designed for your own machine only: the server binds to `127.0.0.1` and has no login. Do not expose it to a network.
+
+## Architecture
+
+npm workspaces monorepo, TypeScript strict everywhere, feature-based design in every package.
+
+```
+pc-monitor/
+├── shared/     zod schemas + types shared by both sides (planned)
+├── backend/    Express 5 + Prisma/SQLite + WebSocket
+└── frontend/   React + Vite dashboard (planned)
+```
+
+Dependency direction: `app -> features -> core -> shared`. A feature only talks to another feature through its `index.ts`.
+
+**One source of truth for types.** Schemas are defined once in `shared/` with zod. The backend uses them to validate requests and to generate the OpenAPI document, so the Swagger docs cannot drift from the code. The frontend derives its types from the same schemas and validates incoming WebSocket messages with them.
+
+**Data flow**
+
+1. A ticker collects a snapshot every 2 seconds with `systeminformation`.
+2. The snapshot is broadcast over WebSocket and saved to SQLite; exceeding a configured threshold also writes an alert to the logs.
+3. The frontend loads recent history over REST, then appends live ticks.
+4. A fix button calls `POST /api/actions/:id/run`. The server looks the id up in a fixed registry, runs the matching PowerShell script and records the result in the logs.
+
+## Security model
+
+There is no login, so the main threat is another website in your browser calling `localhost`. Defenses:
+
+- server bound to `127.0.0.1` only
+- strict CORS allow-list, JSON-only mutating requests, and an `Origin` check on both HTTP and the WebSocket upgrade
+- scripts started with `spawn` and an argument array (never a shell string); action ids are only registry keys
+- server-side `confirm: true` for risky actions, and refusal to kill system processes
+- `helmet` headers, Prisma-only database access
+
+Cloning this repo and running it only ever affects the machine it runs on.
 
 ## Getting started
 
-Requirements: Node.js 22+ and Windows (PowerShell).
+Requirements: Node.js 22+, Windows with PowerShell.
 
 ```bash
 git clone https://github.com/EliaGiolli/dashboard-admin-express.git
@@ -33,15 +72,6 @@ DATABASE_URL="file:./dev.db"
 API_SEGRETO="your_secret"
 ```
 
-Then, from `backend/`:
+Then, from `backend/`: `npx prisma generate` and `npx prisma db push`.
 
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-```bash
-npm run dev
-```
-
-The dev, build and test scripts are being rebuilt in phase B1, so they may not work yet.
+The dev, build and test scripts are being rebuilt in phase B1 and may not work yet. See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for package details.

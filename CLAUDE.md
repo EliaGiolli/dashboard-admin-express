@@ -17,6 +17,8 @@ A "phase" is a section of `TASKS.md` (S, B1..B10, F1..F5). Commits are per task;
 8. When the last task of the phase is done and tests pass, open ONE PR against `main` with `gh pr create` (summary listing the tasks + test plan). Pushing and opening PRs are visible to others: confirm with the user the first time, then follow whatever standing permission they gave.
 9. Report the PR link and wait for the merge (or the user's OK) before starting the next phase on a fresh branch from updated `main`. Never commit directly to `main`.
 
+README policy: there are three READMEs, `README.md` (fullstack, can be detailed: architecture, run, security, API overview), `backend/README.md` and `frontend/README.md` (modern and concise: tech icons from skillicons.dev, stack, structure, scripts). At the end of each phase, update them only if there is something useful to write (new commands, features, structure); skip it otherwise. Don't document features that don't exist yet, mark them as planned.
+
 Backend gate: the backend is "done" only when tests pass, it runs locally with live WebSocket ticks, and every endpoint works from Swagger UI. Then stop and ask the user before starting the frontend.
 
 ## Commands (target; confirm they exist before relying on them)
