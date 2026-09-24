@@ -1,5 +1,5 @@
-import { prisma } from "../lib/prisma.js"; // Il tuo singleton
-import { type Log as LogModel } from "../generated/prisma/client.js";
+import { prisma } from "../../core/prisma.js"; // Il tuo singleton
+import { type Log as LogModel } from "../../generated/prisma/client.js";
 
 export class LoggerService {
 
@@ -16,6 +16,7 @@ export class LoggerService {
             data: {
                 logMessage,
                 logLevel,
+                archived: false,
             }
         });
     }

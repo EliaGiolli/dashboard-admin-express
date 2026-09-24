@@ -1,6 +1,6 @@
-import { AppError } from "../helpers/appError.js";
-import { prisma } from "../lib/prisma.js";
-import { LoggerService } from "../services/infoLogService.js";
+import { AppError } from "../../core/errors/appError.js";
+import { prisma } from "../../core/prisma.js";
+import { LoggerService } from "./logs.service.js";
 import { type Response, type Request, type NextFunction } from "express";
 
 const logService = new LoggerService();
