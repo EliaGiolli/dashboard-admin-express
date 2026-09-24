@@ -65,13 +65,9 @@ cd dashboard-admin-express
 npm install
 ```
 
-Create `backend/.env`:
+Copy `backend/.env.example` to `backend/.env` and set the values, then from `backend/` run `npx prisma generate` and `npx prisma db push`.
 
-```
-DATABASE_URL="file:./dev.db"
-API_SEGRETO="your_secret"
-```
-
-Then, from `backend/`: `npx prisma generate` and `npx prisma db push`.
-
-The dev, build and test scripts are being rebuilt in phase B1 and may not work yet. See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for package details.
+```bash
+npm run dev    # from the repo root: starts the backend
+npm test       # backend tests
+``` See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for package details.

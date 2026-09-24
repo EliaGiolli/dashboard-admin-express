@@ -8,7 +8,7 @@ REST + WebSocket API that collects PC metrics, stores them and runs fix scripts.
 
 ## Stack
 
-Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, `systeminformation` *(planned)*, `ws` *(planned)*, Vitest + Supertest *(planned)*, zod + Swagger UI *(planned)*.
+Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, Vitest + Supertest, `tsx`. Planned: `systeminformation`, `ws`, zod + Swagger UI.
 
 ## Structure
 
@@ -22,14 +22,16 @@ src/
 prisma/          schema + migrations
 ```
 
-> Currently the code is still in its original layout (`controllers/`, `services/`, `routes/`); phase B1 moves it into `core/` and `features/`.
+`src/app.ts` builds the Express app (everything under `/api`), `src/server.ts` starts it. `architecture.test.ts` fails if a feature imports another feature's internals.
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | watch mode *(being fixed in B1)* |
-| `npm test` | Vitest *(planned)* |
+| `npm run dev` | start with `tsx watch` |
+| `npm test` | Vitest + Supertest |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run build` / `npm start` | compile to `dist/` and run it |
 | `npx prisma generate` | generate the Prisma client |
 | `npx prisma migrate dev` | apply schema changes |
 
