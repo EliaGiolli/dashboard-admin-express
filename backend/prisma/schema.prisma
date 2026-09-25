@@ -20,13 +20,21 @@ model Log {
   archived Boolean
 }
 
-model System {
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now()) // when the system creates a log, we don't need to manually pass the date
-  uptime Int
-  totalMemory BigInt
-  freeMemory BigInt
-  cpuUsagePercent Float
+// One metrics sample, written by the ticker every few seconds.
+// Byte values are Float: SQLite REAL holds integers exactly up to 2^53 and avoids BigInt in JSON.
+model Sample {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  cpuTotal     Float    // percent, 0-100
+  cpuTemp      Float?   // celsius; null when the sensor is not readable (common on Windows)
+  ramUsed      Float    // bytes
+  ramTotal     Float    // bytes
+  diskReadBps  Float    // bytes per second
+  diskWriteBps Float
+  netRxBps     Float
+  netTxBps     Float
+
+  @@index([createdAt])
 }
 
 model AppConfig {

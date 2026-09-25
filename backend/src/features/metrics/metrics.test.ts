@@ -5,7 +5,7 @@ import app from '../../app.js';
 import { prisma } from '../../core/prisma.js';
 
 beforeEach(async () => {
-  await prisma.system.deleteMany();
+  await prisma.sample.deleteMany();
 });
 
 describe('system API', () => {
@@ -15,7 +15,16 @@ describe('system API', () => {
     expect(systemSampleSchema.parse(res.body)).toBeTruthy();
   });
 
-  it('lists recorded samples as JSON (BigInt columns are serialized as numbers)', async () => {
+  it('stores the real sample columns, with a nullable CPU temperature', async () => {
+    const res = await request(app).post('/api/system/record');
+    const row = await prisma.sample.findUniqueOrThrow({ where: { id: res.body.id } });
+    expect(row.cpuTemp).toBeNull();
+    expect(row.ramTotal).toBeGreaterThan(0);
+    expect(row.ramUsed).toBeLessThanOrEqual(row.ramTotal);
+    expect(res.body).toMatchObject({ diskReadBps: 0, diskWriteBps: 0, netRxBps: 0, netTxBps: 0 });
+  });
+
+  it('lists recorded samples as JSON', async () => {
     await request(app).post('/api/system/record');
     await request(app).post('/api/system/record');
     const res = await request(app).get('/api/system');
