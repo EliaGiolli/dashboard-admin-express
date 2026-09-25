@@ -15,6 +15,13 @@ export class LoggerService {
     return prisma.log.update({ where: { id }, data: { archived } });
   }
 
+  // Deletes logs older than `days`; returns how many were removed.
+  async pruneOlderThan(days: number, now: Date = new Date()): Promise<number> {
+    const cutoff = new Date(now.getTime() - days * 86_400_000);
+    const { count } = await prisma.log.deleteMany({ where: { timestamp: { lt: cutoff } } });
+    return count;
+  }
+
   async deleteLogById(id: number): Promise<void> {
     await prisma.log.delete({ where: { id } });
   }

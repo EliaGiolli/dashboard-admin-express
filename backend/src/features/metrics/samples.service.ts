@@ -24,3 +24,10 @@ export async function getLatestSamples(take: number): Promise<SystemSample[]> {
   const rows = await prisma.sample.findMany({ take, orderBy: { createdAt: 'desc' } });
   return rows.map(toSample);
 }
+
+// Deletes samples older than `days`; returns how many were removed.
+export async function pruneSamplesOlderThan(days: number, now: Date = new Date()): Promise<number> {
+  const cutoff = new Date(now.getTime() - days * 86_400_000);
+  const { count } = await prisma.sample.deleteMany({ where: { createdAt: { lt: cutoff } } });
+  return count;
+}

@@ -15,3 +15,6 @@ export const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:
 export const SELF_ORIGIN = `http://${HOST}:${PORT}`;
 
 export const ALLOWED_ORIGINS = [FRONTEND_ORIGIN, SELF_ORIGIN];
+
+// Samples and logs older than this are deleted at startup (samples arrive every 2s).
+export const RETENTION_DAYS = Number(process.env.RETENTION_DAYS) > 0 ? Number(process.env.RETENTION_DAYS) : 7;
