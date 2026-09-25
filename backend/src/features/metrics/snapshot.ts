@@ -1,4 +1,4 @@
-import type { CpuStats } from '@pc-monitor/shared';
+import type { CpuStats, RamStats } from '@pc-monitor/shared';
 import si from 'systeminformation';
 
 // Clamps to 0-100 and keeps one decimal: enough for charts, smaller WS payloads.
@@ -33,5 +33,16 @@ export async function readCpu(): Promise<CpuStats> {
     total: toPercent(load.currentLoad),
     perCore: load.cpus.map((core) => toPercent(core.load)),
     tempC,
+  };
+}
+
+// "Used" is what's not available to new programs, so reclaimable cache doesn't count (matters on Linux).
+export async function readRam(): Promise<RamStats> {
+  const mem = await si.mem();
+  const used = Math.max(0, mem.total - mem.available);
+  return {
+    used,
+    total: mem.total,
+    usedPercent: mem.total > 0 ? toPercent((used / mem.total) * 100) : 0,
   };
 }

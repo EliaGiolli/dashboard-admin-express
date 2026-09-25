@@ -1,9 +1,9 @@
 import si from 'systeminformation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTempReader, readCpu, toPercent } from './snapshot.js';
+import { createTempReader, readCpu, readRam, toPercent } from './snapshot.js';
 
 vi.mock('systeminformation', () => ({
-  default: { currentLoad: vi.fn(), cpuTemperature: vi.fn() },
+  default: { currentLoad: vi.fn(), cpuTemperature: vi.fn(), mem: vi.fn() },
 }));
 
 const mocked = vi.mocked(si);
@@ -59,5 +59,17 @@ describe('createTempReader', () => {
     mocked.cpuTemperature.mockRejectedValue(new Error('WMI unavailable'));
     const readTemp = createTempReader();
     await expect(readTemp()).resolves.toBeNull();
+  });
+});
+
+describe('readRam', () => {
+  it('counts used memory as total minus available', async () => {
+    mocked.mem.mockResolvedValue({
+      total: 16_000_000_000,
+      available: 4_000_000_000,
+      free: 1_000_000_000,
+    } as Awaited<ReturnType<typeof si.mem>>);
+
+    expect(await readRam()).toEqual({ used: 12_000_000_000, total: 16_000_000_000, usedPercent: 75 });
   });
 });
