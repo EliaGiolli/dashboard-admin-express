@@ -18,3 +18,54 @@ export type SystemSample = z.infer<typeof systemSampleSchema>;
 // A sample before it is stored: the database assigns id and createdAt.
 export const newSampleSchema = systemSampleSchema.omit({ id: true, createdAt: true });
 export type NewSample = z.infer<typeof newSampleSchema>;
+
+// Live snapshot collected by the ticker and pushed over the WebSocket.
+// Rates are null when they can't be measured yet (first reading) or at all on this machine.
+const percentSchema = z.number().min(0).max(100);
+const bytesSchema = z.number().nonnegative();
+const rateSchema = z.number().nonnegative().nullable();
+
+export const cpuStatsSchema = z.object({
+  total: percentSchema,
+  perCore: z.array(percentSchema),
+  tempC: z.number().nullable(), // usually null on Windows
+});
+export type CpuStats = z.infer<typeof cpuStatsSchema>;
+
+export const ramStatsSchema = z.object({
+  used: bytesSchema,
+  total: bytesSchema,
+  usedPercent: percentSchema,
+});
+export type RamStats = z.infer<typeof ramStatsSchema>;
+
+export const driveStatsSchema = z.object({
+  mount: z.string(), // "C:"
+  fsType: z.string(), // "NTFS"
+  size: bytesSchema,
+  used: bytesSchema,
+  usedPercent: percentSchema,
+});
+export type DriveStats = z.infer<typeof driveStatsSchema>;
+
+export const diskStatsSchema = z.object({
+  drives: z.array(driveStatsSchema),
+  readBps: rateSchema,
+  writeBps: rateSchema,
+});
+export type DiskStats = z.infer<typeof diskStatsSchema>;
+
+export const networkStatsSchema = z.object({
+  rxBps: rateSchema,
+  txBps: rateSchema,
+});
+export type NetworkStats = z.infer<typeof networkStatsSchema>;
+
+export const snapshotSchema = z.object({
+  timestamp: z.iso.datetime(),
+  cpu: cpuStatsSchema,
+  ram: ramStatsSchema,
+  disk: diskStatsSchema,
+  network: networkStatsSchema,
+});
+export type Snapshot = z.infer<typeof snapshotSchema>;
