@@ -7,11 +7,31 @@ export function toPercent(value: number): number {
   return Math.round(Math.min(100, Math.max(0, value)) * 10) / 10;
 }
 
+// CPU temperature is unreliable on Windows (usually no readable sensor), and every
+// call spawns PowerShell. After the first reading without a value we stop asking and
+// report null for good, instead of paying for a process every tick. Never throws.
+export function createTempReader() {
+  let supported = true;
+  return async function readTemp(): Promise<number | null> {
+    if (!supported) return null;
+    try {
+      const { main } = await si.cpuTemperature();
+      if (typeof main === 'number' && Number.isFinite(main) && main > 0) return Math.round(main * 10) / 10;
+    } catch {
+      // fall through: treat errors like a missing sensor
+    }
+    supported = false;
+    return null;
+  };
+}
+
+const readTemp = createTempReader();
+
 export async function readCpu(): Promise<CpuStats> {
-  const load = await si.currentLoad();
+  const [load, tempC] = await Promise.all([si.currentLoad(), readTemp()]);
   return {
     total: toPercent(load.currentLoad),
     perCore: load.cpus.map((core) => toPercent(core.load)),
-    tempC: null,
+    tempC,
   };
 }
