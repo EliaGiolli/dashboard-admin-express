@@ -8,7 +8,7 @@ REST + WebSocket API that collects PC metrics, stores them and runs fix scripts.
 
 ## Stack
 
-Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, zod (via `@pc-monitor/shared`), Vitest + Supertest, `tsx`. Planned: `systeminformation`, `ws`, Swagger UI.
+Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, zod (via `@pc-monitor/shared`), Swagger UI (`@asteasolutions/zod-to-openapi` + `swagger-ui-express`), Vitest + Supertest, `tsx`. Planned: `systeminformation`, `ws`.
 
 ## Structure
 
@@ -22,7 +22,9 @@ src/
 prisma/          schema + migrations
 ```
 
-`src/app.ts` builds the Express app (everything under `/api`), `src/server.ts` starts it. `architecture.test.ts` fails if a feature imports another feature's internals. Request validation uses zod schemas from `@pc-monitor/shared` through the `validate()` middleware (`core/validation`); tests run against a throwaway SQLite database created with `prisma migrate deploy`.
+`src/app.ts` builds the Express app (everything under `/api`), `src/server.ts` starts it. `src/routeMounts.ts` is the single list of `{prefix, router}` pairs: `app.ts` mounts the API from it, and `openapi-coverage.test.ts` walks the same list to fail the build if a mounted route isn't documented in the OpenAPI spec. `architecture.test.ts` fails if a feature imports another feature's internals. Request validation uses zod schemas from `@pc-monitor/shared` through the `validate()` middleware (`core/validation`); tests run against a throwaway SQLite database created with `prisma migrate deploy`.
+
+Each feature that exposes routes also has a `*.docs.ts` registering its paths on the shared OpenAPI registry (`core/openapi`), built from the same `@pc-monitor/shared` zod schemas used for validation — so the Swagger docs can't drift from the code.
 
 ## Why feature-based instead of MVC
 
@@ -49,4 +51,4 @@ Trade-off: a very small app doesn't need this much structure, and MVC is simpler
 | `npx prisma migrate deploy` | create/update the database from the migrations |
 | `npx prisma migrate dev` | create a new migration after a schema change |
 
-API docs will be served at `http://127.0.0.1:4317/api/docs` *(planned)*.
+Swagger UI is served at `/api/docs` (raw spec at `/api/openapi.json`) on whatever port the app listens on (currently `PORT` env, default 3000; moves to `127.0.0.1:4317` in the security phase).
