@@ -1,5 +1,6 @@
-import type { CpuStats, RamStats } from '@pc-monitor/shared';
+import type { CpuStats, DiskStats, RamStats } from '@pc-monitor/shared';
 import si from 'systeminformation';
+import { createWindowsDiskIoSampler, type DiskIo } from './diskIo.js';
 
 // Clamps to 0-100 and keeps one decimal: enough for charts, smaller WS payloads.
 export function toPercent(value: number): number {
@@ -44,5 +45,37 @@ export async function readRam(): Promise<RamStats> {
     used,
     total: mem.total,
     usedPercent: mem.total > 0 ? toPercent((used / mem.total) * 100) : 0,
+  };
+}
+
+const windowsDiskIo = createWindowsDiskIoSampler();
+
+// Stops the background disk sampler (Windows); called when the ticker shuts down.
+export function stopSnapshotSources(): void {
+  windowsDiskIo.stop();
+}
+
+async function readDiskIo(platform: NodeJS.Platform): Promise<DiskIo | null> {
+  if (platform === 'win32') return windowsDiskIo.read();
+  // Linux/macOS: bytes per second; null on the first call, until there is a previous reading.
+  const stats = await si.fsStats();
+  if (!stats || stats.rx_sec == null || stats.wx_sec == null) return null;
+  return { readBps: Math.max(0, Math.round(stats.rx_sec)), writeBps: Math.max(0, Math.round(stats.wx_sec)) };
+}
+
+export async function readDisk(platform: NodeJS.Platform = process.platform): Promise<DiskStats> {
+  const [sizes, io] = await Promise.all([si.fsSize(), readDiskIo(platform)]);
+  return {
+    drives: sizes
+      .filter((d) => d.size > 0)
+      .map((d) => ({
+        mount: d.mount,
+        fsType: d.type,
+        size: d.size,
+        used: d.used,
+        usedPercent: toPercent(d.use),
+      })),
+    readBps: io?.readBps ?? null,
+    writeBps: io?.writeBps ?? null,
   };
 }

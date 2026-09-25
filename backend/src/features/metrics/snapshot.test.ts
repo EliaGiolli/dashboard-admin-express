@@ -1,10 +1,14 @@
 import si from 'systeminformation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTempReader, readCpu, readRam, toPercent } from './snapshot.js';
+import { createTempReader, readCpu, readDisk, readRam, toPercent } from './snapshot.js';
 
 vi.mock('systeminformation', () => ({
-  default: { currentLoad: vi.fn(), cpuTemperature: vi.fn(), mem: vi.fn() },
+  default: { currentLoad: vi.fn(), cpuTemperature: vi.fn(), mem: vi.fn(), fsSize: vi.fn(), fsStats: vi.fn() },
 }));
+
+// The Windows disk sampler spawns PowerShell; replace it with a controllable fake.
+const diskIo = vi.hoisted(() => ({ read: vi.fn(), stop: vi.fn() }));
+vi.mock('./diskIo.js', () => ({ createWindowsDiskIoSampler: () => diskIo }));
 
 const mocked = vi.mocked(si);
 
@@ -71,5 +75,37 @@ describe('readRam', () => {
     } as Awaited<ReturnType<typeof si.mem>>);
 
     expect(await readRam()).toEqual({ used: 12_000_000_000, total: 16_000_000_000, usedPercent: 75 });
+  });
+});
+
+describe('readDisk', () => {
+  const drives = [
+    { fs: 'C:', type: 'NTFS', size: 1_000, used: 700, available: 300, use: 70.04, mount: 'C:', rw: true },
+    { fs: 'E:', type: '', size: 0, used: 0, available: 0, use: 0, mount: 'E:', rw: false }, // empty card reader
+  ] as Awaited<ReturnType<typeof si.fsSize>>;
+
+  it('lists drives with a size and takes throughput from the Windows sampler', async () => {
+    mocked.fsSize.mockResolvedValue(drives);
+    diskIo.read.mockReturnValue({ readBps: 2_048, writeBps: 512 });
+
+    expect(await readDisk('win32')).toEqual({
+      drives: [{ mount: 'C:', fsType: 'NTFS', size: 1_000, used: 700, usedPercent: 70 }],
+      readBps: 2_048,
+      writeBps: 512,
+    });
+    expect(mocked.fsStats).not.toHaveBeenCalled();
+  });
+
+  it('reports null throughput until the sampler has a rate', async () => {
+    mocked.fsSize.mockResolvedValue(drives);
+    diskIo.read.mockReturnValue(null);
+    expect(await readDisk('win32')).toMatchObject({ readBps: null, writeBps: null });
+  });
+
+  it('uses fsStats on other platforms', async () => {
+    mocked.fsSize.mockResolvedValue([]);
+    mocked.fsStats.mockResolvedValue({ rx_sec: 100.4, wx_sec: 50 } as Awaited<ReturnType<typeof si.fsStats>>);
+    expect(await readDisk('linux')).toEqual({ drives: [], readBps: 100, writeBps: 50 });
+    expect(diskIo.read).not.toHaveBeenCalled();
   });
 });

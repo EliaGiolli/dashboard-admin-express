@@ -8,10 +8,10 @@ export const systemSampleSchema = z.object({
   cpuTemp: z.number().nullable(),
   ramUsed: z.number().nonnegative(),
   ramTotal: z.number().nonnegative(),
-  diskReadBps: z.number().nonnegative(),
-  diskWriteBps: z.number().nonnegative(),
-  netRxBps: z.number().nonnegative(),
-  netTxBps: z.number().nonnegative(),
+  diskReadBps: z.number().nonnegative().nullable(),
+  diskWriteBps: z.number().nonnegative().nullable(),
+  netRxBps: z.number().nonnegative().nullable(),
+  netTxBps: z.number().nonnegative().nullable(),
 });
 export type SystemSample = z.infer<typeof systemSampleSchema>;
 
