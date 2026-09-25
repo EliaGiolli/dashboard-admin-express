@@ -1,4 +1,4 @@
-import type { CpuStats, DiskStats, NetworkStats, RamStats } from '@pc-monitor/shared';
+import type { CpuStats, DiskStats, NetworkStats, NewSample, RamStats, Snapshot } from '@pc-monitor/shared';
 import si from 'systeminformation';
 import { createWindowsDiskIoSampler, type DiskIo } from './diskIo.js';
 
@@ -89,4 +89,25 @@ function toRate(value: number | null | undefined): number | null {
 export async function readNetwork(): Promise<NetworkStats> {
   const [iface] = await si.networkStats();
   return { rxBps: toRate(iface?.rx_sec), txBps: toRate(iface?.tx_sec) };
+}
+
+// Reads everything in parallel: on Windows several readers spawn PowerShell, so the
+// total time is the slowest reader (about 1-2s), not the sum.
+export async function collectSnapshot(now: () => Date = () => new Date()): Promise<Snapshot> {
+  const [cpu, ram, disk, network] = await Promise.all([readCpu(), readRam(), readDisk(), readNetwork()]);
+  return { timestamp: now().toISOString(), cpu, ram, disk, network };
+}
+
+// The flat row stored per tick; per-core loads and per-drive usage are live-only.
+export function toNewSample(snapshot: Snapshot): NewSample {
+  return {
+    cpuTotal: snapshot.cpu.total,
+    cpuTemp: snapshot.cpu.tempC,
+    ramUsed: snapshot.ram.used,
+    ramTotal: snapshot.ram.total,
+    diskReadBps: snapshot.disk.readBps,
+    diskWriteBps: snapshot.disk.writeBps,
+    netRxBps: snapshot.network.rxBps,
+    netTxBps: snapshot.network.txBps,
+  };
 }

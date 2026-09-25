@@ -1,6 +1,16 @@
+import { snapshotSchema } from '@pc-monitor/shared';
 import si from 'systeminformation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTempReader, readCpu, readDisk, readNetwork, readRam, toPercent } from './snapshot.js';
+import {
+  collectSnapshot,
+  createTempReader,
+  readCpu,
+  readDisk,
+  readNetwork,
+  readRam,
+  toNewSample,
+  toPercent,
+} from './snapshot.js';
 
 vi.mock('systeminformation', () => ({
   default: { currentLoad: vi.fn(), cpuTemperature: vi.fn(), mem: vi.fn(), fsSize: vi.fn(), fsStats: vi.fn(), networkStats: vi.fn() },
@@ -124,5 +134,45 @@ describe('readNetwork', () => {
     expect(await readNetwork()).toEqual({ rxBps: null, txBps: null });
     mocked.networkStats.mockResolvedValue([]);
     expect(await readNetwork()).toEqual({ rxBps: null, txBps: null });
+  });
+});
+
+describe('collectSnapshot', () => {
+  it('combines every reader into a snapshot that matches the shared schema', async () => {
+    mocked.currentLoad.mockResolvedValue({ currentLoad: 20, cpus: [{ load: 10 }, { load: 30 }] } as Awaited<
+      ReturnType<typeof si.currentLoad>
+    >);
+    mocked.cpuTemperature.mockResolvedValue(temp(null));
+    mocked.mem.mockResolvedValue({ total: 1_000, available: 250 } as Awaited<ReturnType<typeof si.mem>>);
+    mocked.fsSize.mockResolvedValue([
+      { fs: 'C:', type: 'NTFS', size: 100, used: 50, available: 50, use: 50, mount: 'C:', rw: true },
+    ] as Awaited<ReturnType<typeof si.fsSize>>);
+    mocked.fsStats.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof si.fsStats>>);
+    diskIo.read.mockReturnValue(null);
+    mocked.networkStats.mockResolvedValue([{ rx_sec: 10, tx_sec: 20 }] as Awaited<ReturnType<typeof si.networkStats>>);
+
+    const snapshot = await collectSnapshot(() => new Date('2026-09-25T12:00:00.000Z'));
+
+    expect(snapshotSchema.parse(snapshot)).toEqual({
+      timestamp: '2026-09-25T12:00:00.000Z',
+      cpu: { total: 20, perCore: [10, 30], tempC: null },
+      ram: { used: 750, total: 1_000, usedPercent: 75 },
+      disk: {
+        drives: [{ mount: 'C:', fsType: 'NTFS', size: 100, used: 50, usedPercent: 50 }],
+        readBps: null,
+        writeBps: null,
+      },
+      network: { rxBps: 10, txBps: 20 },
+    });
+    expect(toNewSample(snapshot)).toEqual({
+      cpuTotal: 20,
+      cpuTemp: null,
+      ramUsed: 750,
+      ramTotal: 1_000,
+      diskReadBps: null,
+      diskWriteBps: null,
+      netRxBps: 10,
+      netTxBps: 20,
+    });
   });
 });

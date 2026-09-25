@@ -1,8 +1,20 @@
 import { systemSampleSchema } from '@pc-monitor/shared';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import app from '../../app.js';
 import { prisma } from '../../core/prisma.js';
+
+// No real systeminformation calls (they spawn PowerShell); a fixed snapshot is recorded instead.
+vi.mock('./snapshot.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./snapshot.js')>()),
+  collectSnapshot: vi.fn(async () => ({
+    timestamp: new Date().toISOString(),
+    cpu: { total: 37.5, perCore: [30, 45], tempC: null },
+    ram: { used: 6e9, total: 16e9, usedPercent: 37.5 },
+    disk: { drives: [], readBps: 2048, writeBps: null },
+    network: { rxBps: 100, txBps: 50 },
+  })),
+}));
 
 beforeEach(async () => {
   await prisma.sample.deleteMany();
@@ -15,13 +27,19 @@ describe('system API', () => {
     expect(systemSampleSchema.parse(res.body)).toBeTruthy();
   });
 
-  it('stores the real sample columns, with a nullable CPU temperature', async () => {
+  it('stores the collected snapshot, keeping unmeasurable values as null', async () => {
     const res = await request(app).post('/api/system/record');
     const row = await prisma.sample.findUniqueOrThrow({ where: { id: res.body.id } });
-    expect(row.cpuTemp).toBeNull();
-    expect(row.ramTotal).toBeGreaterThan(0);
-    expect(row.ramUsed).toBeLessThanOrEqual(row.ramTotal);
-    expect(res.body).toMatchObject({ diskReadBps: 0, diskWriteBps: 0, netRxBps: 0, netTxBps: 0 });
+    expect(row).toMatchObject({
+      cpuTotal: 37.5,
+      cpuTemp: null,
+      ramUsed: 6e9,
+      ramTotal: 16e9,
+      diskReadBps: 2048,
+      diskWriteBps: null,
+      netRxBps: 100,
+      netTxBps: 50,
+    });
   });
 
   it('lists recorded samples as JSON', async () => {
