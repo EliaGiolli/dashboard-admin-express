@@ -10,6 +10,7 @@ import { registerConfigDocs } from './features/config/index.js';
 import { registerLogsDocs } from './features/logs/index.js';
 import { registerMetricsDocs } from './features/metrics/index.js';
 import { registerHealthDocs } from './features/health/index.js';
+import { registerProcessesDocs } from './features/processes/index.js';
 import { AppError } from './core/errors/appError.js';
 import { globalErrorHandler } from './core/errors/errorHandler.js';
 import { createDocsRouter, registry } from './core/openapi/index.js';
@@ -22,6 +23,7 @@ registerHealthDocs(registry);
 registerConfigDocs(registry);
 registerMetricsDocs(registry);
 registerLogsDocs(registry);
+registerProcessesDocs(registry);
 
 const app = express();
 app.use(helmet());

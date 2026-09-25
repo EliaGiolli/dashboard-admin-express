@@ -10,7 +10,7 @@ Live PC performance charts and one-click fix scripts, all running locally on you
 
 ## What it does
 
-- **Monitor** *(planned)*: CPU (total, per core, temperature), RAM, disk usage and I/O, network throughput and a live process table, streamed over WebSocket every 2 seconds and stored in SQLite so history survives restarts.
+- **Monitor**: CPU (total, per core, temperature), RAM, disk usage and I/O, network throughput and a top-processes list (`GET /api/processes`); a sample can be recorded on demand (`POST /api/system/record`). *(planned)* streamed over WebSocket every 2 seconds and stored automatically so history survives restarts.
 - **Fix** *(planned)*: buttons that run PowerShell scripts: kill a process, clear temp files, flush the DNS cache, empty the Recycle Bin. Risky actions need confirmation, enforced by the server.
 - **Log** *(planned)*: every action run and every threshold alert (for example CPU above its limit) is written to a searchable log.
 - **Document**: every mounted endpoint is described in Swagger UI (`/api/docs`, spec at `/api/openapi.json`), generated from the same zod schemas used to validate requests; a test fails the build if a route is added without docs.

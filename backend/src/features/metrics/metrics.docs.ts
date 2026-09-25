@@ -23,6 +23,8 @@ export function registerMetricsDocs(registry: ApiRegistry) {
     path: '/api/system/record',
     tags: ['System'],
     summary: 'Take and store a system sample now',
+    description:
+      'Collects a real snapshot (about 1-2s on Windows). CPU temperature is null when the sensor is not readable; disk and network rates are null until a previous reading exists.',
     responses: {
       201: { description: 'Stored sample', content: json(systemSampleSchema) },
       500: errorResponses[500],
