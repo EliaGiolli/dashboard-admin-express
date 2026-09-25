@@ -14,3 +14,7 @@ export const systemSampleSchema = z.object({
   netTxBps: z.number().nonnegative(),
 });
 export type SystemSample = z.infer<typeof systemSampleSchema>;
+
+// A sample before it is stored: the database assigns id and createdAt.
+export const newSampleSchema = systemSampleSchema.omit({ id: true, createdAt: true });
+export type NewSample = z.infer<typeof newSampleSchema>;
