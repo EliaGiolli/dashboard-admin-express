@@ -65,7 +65,7 @@ cd dashboard-admin-express
 npm install
 ```
 
-Copy `backend/.env.example` to `backend/.env` and set the values, then from `backend/` run `npx prisma generate` and `npx prisma migrate deploy` (creates the SQLite database).
+Copy `backend/.env.example` to `backend/.env` and set the values, then from `backend/` run `npx prisma generate` and `npx prisma migrate deploy` (creates the SQLite database). Default alert thresholds are seeded when the server starts; samples and logs older than `RETENTION_DAYS` (default 7) are pruned at startup.
 
 ```bash
 npm run dev    # from the repo root: starts the backend

@@ -50,8 +50,15 @@ Trade-off: a very small app doesn't need this much structure, and MVC is simpler
 | `npx prisma generate` | generate the Prisma client |
 | `npx prisma migrate deploy` | create/update the database from the migrations |
 | `npx prisma migrate dev` | create a new migration after a schema change |
+| `npx prisma db seed` | insert the default thresholds (also done at startup) |
 
 Swagger UI is served at `/api/docs` (raw spec at `/api/openapi.json`); the app listens on `127.0.0.1` only (`PORT` env, default 4317).
+
+## Database
+
+Three tables (`prisma/schema.prisma`): `Sample` (one metrics sample: CPU %, nullable CPU temperature, RAM used/total, disk read/write and network rx/tx in bytes per second), `Log` (manual entries, threshold alerts and fix-action runs, told apart by `source`; action runs also store `actionId`, `success`, `durationMs` as the audit trail) and `AppConfig` (key/value settings).
+
+On startup the server seeds the `CPU_THRESHOLD`, `RAM_THRESHOLD` and `DISK_THRESHOLD` rows (90% by default; existing values are never overwritten) and deletes samples and logs older than `RETENTION_DAYS` (env, default 7).
 
 ## Security
 
