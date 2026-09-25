@@ -8,7 +8,7 @@ REST + WebSocket API that collects PC metrics, stores them and runs fix scripts.
 
 ## Stack
 
-Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, zod (via `@pc-monitor/shared`), Swagger UI (`@asteasolutions/zod-to-openapi` + `swagger-ui-express`), Vitest + Supertest, `tsx`. Planned: `systeminformation`, `ws`.
+Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, zod (via `@pc-monitor/shared`), `systeminformation`, Swagger UI (`@asteasolutions/zod-to-openapi` + `swagger-ui-express`), Vitest + Supertest, `tsx`. Planned: `ws`.
 
 ## Structure
 
@@ -53,6 +53,16 @@ Trade-off: a very small app doesn't need this much structure, and MVC is simpler
 | `npx prisma db seed` | insert the default thresholds (also done at startup) |
 
 Swagger UI is served at `/api/docs` (raw spec at `/api/openapi.json`); the app listens on `127.0.0.1` only (`PORT` env, default 4317).
+
+## Metrics
+
+`features/metrics/snapshot.ts` reads CPU (total, per core, temperature), RAM, disk usage per drive plus read/write throughput, and network rx/tx of the default interface, all in parallel through `systeminformation`. Windows quirks handled there:
+
+- **CPU temperature** is usually not readable: the first empty reading turns the sensor off for the rest of the run and the value stays `null` (never an error).
+- **Disk throughput** isn't available from `systeminformation` on Windows, and perf counter names are localized, so `diskIo.ts` keeps one PowerShell process reading the raw WMI counters (`Win32_PerfRawData_PerfDisk_PhysicalDisk`) every 2s and computes the rate from the deltas. It exits on its own when the server stops.
+- Rates are `null` until there is a previous reading to compare against.
+
+`features/processes` serves `GET /api/processes?sortBy=cpu|mem&limit=` (top N, System Idle Process excluded).
 
 ## Database
 
