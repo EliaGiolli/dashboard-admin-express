@@ -51,4 +51,12 @@ Trade-off: a very small app doesn't need this much structure, and MVC is simpler
 | `npx prisma migrate deploy` | create/update the database from the migrations |
 | `npx prisma migrate dev` | create a new migration after a schema change |
 
-Swagger UI is served at `/api/docs` (raw spec at `/api/openapi.json`) on whatever port the app listens on (currently `PORT` env, default 3000; moves to `127.0.0.1:4317` in the security phase).
+Swagger UI is served at `/api/docs` (raw spec at `/api/openapi.json`); the app listens on `127.0.0.1` only (`PORT` env, default 4317).
+
+## Security
+
+`app.ts` applies, in order: `helmet()`, a CORS allow-list, `originGuard`, `requireJsonContentType`, then `express.json()`.
+
+- **CORS + Origin check** (`core/security/cors.ts`, `originGuard.ts`): both consult `ALLOWED_ORIGINS` (`core/config/env.ts`) — the frontend's origin (`FRONTEND_ORIGIN` env, default `http://localhost:5173`) plus the server's own origin, so Swagger UI's "Try it out" (same-origin) still works. CORS controls whether a browser can *read* a cross-origin response; `originGuard` is an independent server-side check that rejects a mismatched `Origin` on `POST`/`PUT`/`PATCH`/`DELETE` with 403, regardless of what the browser would have allowed.
+- **`requireJsonContentType`**: any request carrying a body must be `application/json` (415 otherwise). Together with the Origin check this closes the CORS "simple request" gap — a plain HTML form can only submit `application/x-www-form-urlencoded`/`multipart/form-data`/`text/plain` and skip preflight, so requiring JSON forces even same-site form-based attempts through a real preflight.
+- **`adminGuard`** (`core/security/authGuard.ts`): compares the `x-api-key` header against `API_SEGRETO` with `crypto.timingSafeEqual`. Not wired to any route yet — a key shipped to a browser isn't a real secret, so this is defense in depth only; the binding to `127.0.0.1` plus the two checks above are the actual protection.
