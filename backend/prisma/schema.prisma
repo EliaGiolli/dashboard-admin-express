@@ -18,15 +18,27 @@ model Log {
   logLevel String
   logMessage String
   archived Boolean
+  source String @default("manual") // "manual" (POST /api/logs), "monitor" (threshold alerts), "action" (fix script runs)
+  actionId String? // registry id of the action that ran; audit fields are null for non-action logs
+  success Boolean?
+  durationMs Int?
 }
 
-model System {
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now()) // when the system creates a log, we don't need to manually pass the date
-  uptime Int
-  totalMemory BigInt
-  freeMemory BigInt
-  cpuUsagePercent Float
+// One metrics sample, written by the ticker every few seconds.
+// Byte values are Float: SQLite REAL holds integers exactly up to 2^53 and avoids BigInt in JSON.
+model Sample {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  cpuTotal     Float    // percent, 0-100
+  cpuTemp      Float?   // celsius; null when the sensor is not readable (common on Windows)
+  ramUsed      Float    // bytes
+  ramTotal     Float    // bytes
+  diskReadBps  Float    // bytes per second
+  diskWriteBps Float
+  netRxBps     Float
+  netTxBps     Float
+
+  @@index([createdAt])
 }
 
 model AppConfig {

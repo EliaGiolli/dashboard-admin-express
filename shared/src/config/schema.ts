@@ -23,3 +23,12 @@ export type UpdateConfig = z.infer<typeof updateConfigSchema>;
 
 export const safeEnvSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]));
 export type SafeEnv = z.infer<typeof safeEnvSchema>;
+
+// Monitoring thresholds stored in AppConfig, in percent. Seeded at startup, editable afterwards.
+export const thresholdKeys = ['CPU_THRESHOLD', 'RAM_THRESHOLD', 'DISK_THRESHOLD'] as const;
+export type ThresholdKey = (typeof thresholdKeys)[number];
+export const defaultThresholds: Record<ThresholdKey, number> = {
+  CPU_THRESHOLD: 90,
+  RAM_THRESHOLD: 90,
+  DISK_THRESHOLD: 90,
+};

@@ -3,6 +3,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import { prisma } from '../../core/prisma.js';
+import { LoggerService } from './logs.service.js';
 
 beforeEach(async () => {
   await prisma.log.deleteMany();
@@ -21,6 +22,33 @@ describe('logs API', () => {
       logMessage: 'disk almost full',
       logLevel: 'warning',
       archived: false,
+      source: 'manual',
+      actionId: null,
+      success: null,
+      durationMs: null,
+    });
+  });
+
+  it('ignores source and audit fields sent by clients', async () => {
+    const res = await request(app)
+      .post('/api/logs')
+      .send({ logMessage: 'fake run', logLevel: 'info', source: 'action', actionId: 'flush-dns', success: true });
+    expect(res.status).toBe(201);
+    expect(res.body.newLog).toMatchObject({ source: 'manual', actionId: null, success: null });
+  });
+
+  it('stores audit fields for action runs written by the server', async () => {
+    const log = await new LoggerService().writeLogs(
+      { logMessage: 'Flushed DNS', logLevel: 'info' },
+      { source: 'action', actionId: 'flush-dns', success: true, durationMs: 120 },
+    );
+    const res = await request(app).get('/api/logs');
+    expect(logSchema.parse(res.body[0])).toMatchObject({
+      id: log.id,
+      source: 'action',
+      actionId: 'flush-dns',
+      success: true,
+      durationMs: 120,
     });
   });
 
