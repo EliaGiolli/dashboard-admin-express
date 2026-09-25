@@ -11,6 +11,7 @@ import { metricsRouter } from './features/metrics/index.js';
 import { healthRouter } from './features/health/index.js';
 import { AppError } from './core/errors/appError.js';
 import { globalErrorHandler } from './core/errors/errorHandler.js';
+import { createDocsRouter } from './core/openapi/index.js';
 
 const app = express();
 app.use(express.json());
@@ -20,6 +21,7 @@ api.use('/health', healthRouter);
 api.use('/env', configRouter);
 api.use('/system', metricsRouter);
 api.use('/logs', logsRouter);
+api.use(createDocsRouter());
 app.use('/api', api);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
