@@ -1,4 +1,4 @@
-import type { CpuStats, DiskStats, RamStats } from '@pc-monitor/shared';
+import type { CpuStats, DiskStats, NetworkStats, RamStats } from '@pc-monitor/shared';
 import si from 'systeminformation';
 import { createWindowsDiskIoSampler, type DiskIo } from './diskIo.js';
 
@@ -78,4 +78,15 @@ export async function readDisk(platform: NodeJS.Platform = process.platform): Pr
     readBps: io?.readBps ?? null,
     writeBps: io?.writeBps ?? null,
   };
+}
+
+function toRate(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
+}
+
+// Default interface only: summing every adapter would double count virtual/bridged ones.
+// Rates are null on the first call, until systeminformation has a previous reading.
+export async function readNetwork(): Promise<NetworkStats> {
+  const [iface] = await si.networkStats();
+  return { rxBps: toRate(iface?.rx_sec), txBps: toRate(iface?.tx_sec) };
 }

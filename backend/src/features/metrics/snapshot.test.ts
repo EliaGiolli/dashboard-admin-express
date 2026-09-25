@@ -1,9 +1,9 @@
 import si from 'systeminformation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTempReader, readCpu, readDisk, readRam, toPercent } from './snapshot.js';
+import { createTempReader, readCpu, readDisk, readNetwork, readRam, toPercent } from './snapshot.js';
 
 vi.mock('systeminformation', () => ({
-  default: { currentLoad: vi.fn(), cpuTemperature: vi.fn(), mem: vi.fn(), fsSize: vi.fn(), fsStats: vi.fn() },
+  default: { currentLoad: vi.fn(), cpuTemperature: vi.fn(), mem: vi.fn(), fsSize: vi.fn(), fsStats: vi.fn(), networkStats: vi.fn() },
 }));
 
 // The Windows disk sampler spawns PowerShell; replace it with a controllable fake.
@@ -107,5 +107,22 @@ describe('readDisk', () => {
     mocked.fsStats.mockResolvedValue({ rx_sec: 100.4, wx_sec: 50 } as Awaited<ReturnType<typeof si.fsStats>>);
     expect(await readDisk('linux')).toEqual({ drives: [], readBps: 100, writeBps: 50 });
     expect(diskIo.read).not.toHaveBeenCalled();
+  });
+});
+
+describe('readNetwork', () => {
+  type Iface = Awaited<ReturnType<typeof si.networkStats>>[number];
+
+  it('returns rx/tx bytes per second of the default interface', async () => {
+    mocked.networkStats.mockResolvedValue([{ iface: 'Wi-Fi', rx_sec: 3452.6, tx_sec: 3838.1 } as Iface]);
+    expect(await readNetwork()).toEqual({ rxBps: 3453, txBps: 3838 });
+    expect(mocked.networkStats).toHaveBeenCalledWith();
+  });
+
+  it('returns null rates on the first reading or without an interface', async () => {
+    mocked.networkStats.mockResolvedValue([{ iface: 'Wi-Fi', rx_sec: null, tx_sec: null } as unknown as Iface]);
+    expect(await readNetwork()).toEqual({ rxBps: null, txBps: null });
+    mocked.networkStats.mockResolvedValue([]);
+    expect(await readNetwork()).toEqual({ rxBps: null, txBps: null });
   });
 });
