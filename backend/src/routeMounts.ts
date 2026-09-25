@@ -3,6 +3,7 @@ import { configRouter } from './features/config/index.js';
 import { healthRouter } from './features/health/index.js';
 import { logsRouter } from './features/logs/index.js';
 import { metricsRouter } from './features/metrics/index.js';
+import { processesRouter } from './features/processes/index.js';
 
 export interface RouteMount {
   prefix: string;
@@ -17,4 +18,5 @@ export const routeMounts: RouteMount[] = [
   { prefix: '/env', router: configRouter },
   { prefix: '/system', router: metricsRouter },
   { prefix: '/logs', router: logsRouter },
+  { prefix: '/processes', router: processesRouter },
 ];
