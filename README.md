@@ -47,11 +47,11 @@ Dependency direction: `app -> features -> core -> shared`. A feature only talks 
 
 There is no login, so the main threat is another website in your browser calling `localhost`. Defenses:
 
-- server bound to `127.0.0.1` only
-- strict CORS allow-list, JSON-only mutating requests, and an `Origin` check on both HTTP and the WebSocket upgrade
-- scripts started with `spawn` and an argument array (never a shell string); action ids are only registry keys
-- server-side `confirm: true` for risky actions, and refusal to kill system processes
-- `helmet` headers, Prisma-only database access
+- server bound to `127.0.0.1` only, default port 4317
+- strict CORS allow-list (only the frontend origin and the server's own origin, so Swagger UI's "Try it out" still works)
+- requests that carry a body must be `Content-Type: application/json`, and a server-side `Origin` check independent of CORS rejects mismatched mutating requests with 403 — both close the "simple request" gap a plain HTML form could otherwise use
+- `helmet` headers, Prisma-only database access, constant-time comparison for the (defense-in-depth) admin guard
+- *(planned)* `Origin` check on the WebSocket upgrade too; scripts started with `spawn` and an argument array (never a shell string), action ids only ever used as registry keys, server-side `confirm: true` for risky actions, and refusal to kill system processes
 
 Cloning this repo and running it only ever affects the machine it runs on.
 
