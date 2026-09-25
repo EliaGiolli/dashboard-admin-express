@@ -14,6 +14,7 @@ import { AppError } from './core/errors/appError.js';
 import { globalErrorHandler } from './core/errors/errorHandler.js';
 import { createDocsRouter, registry } from './core/openapi/index.js';
 import { corsMiddleware } from './core/security/cors.js';
+import { requireJsonContentType } from './core/security/requireJson.js';
 import { routeMounts } from './routeMounts.js';
 
 registerHealthDocs(registry);
@@ -24,6 +25,7 @@ registerLogsDocs(registry);
 const app = express();
 app.use(helmet());
 app.use(corsMiddleware);
+app.use(requireJsonContentType);
 app.use(express.json());
 
 const api = express.Router();
