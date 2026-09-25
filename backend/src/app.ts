@@ -5,13 +5,18 @@ import {
   type NextFunction,
 } from 'express';
 
-import { configRouter } from './features/config/index.js';
-import { logsRouter } from './features/logs/index.js';
-import { metricsRouter } from './features/metrics/index.js';
-import { healthRouter } from './features/health/index.js';
+import { configRouter, registerConfigDocs } from './features/config/index.js';
+import { logsRouter, registerLogsDocs } from './features/logs/index.js';
+import { metricsRouter, registerMetricsDocs } from './features/metrics/index.js';
+import { healthRouter, registerHealthDocs } from './features/health/index.js';
 import { AppError } from './core/errors/appError.js';
 import { globalErrorHandler } from './core/errors/errorHandler.js';
-import { createDocsRouter } from './core/openapi/index.js';
+import { createDocsRouter, registry } from './core/openapi/index.js';
+
+registerHealthDocs(registry);
+registerConfigDocs(registry);
+registerMetricsDocs(registry);
+registerLogsDocs(registry);
 
 const app = express();
 app.use(express.json());
