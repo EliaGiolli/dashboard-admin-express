@@ -18,6 +18,10 @@ model Log {
   logLevel String
   logMessage String
   archived Boolean
+  source String @default("manual") // "manual" (POST /api/logs), "monitor" (threshold alerts), "action" (fix script runs)
+  actionId String? // registry id of the action that ran; audit fields are null for non-action logs
+  success Boolean?
+  durationMs Int?
 }
 
 // One metrics sample, written by the ticker every few seconds.
