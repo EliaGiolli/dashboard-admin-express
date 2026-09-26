@@ -120,3 +120,45 @@ describe('POST /api/actions/:id/run', () => {
     expect((await post('/api/actions/flush-dns/run').send({})).status).toBe(200);
   });
 });
+
+describe('kill-process end to end (both routes, runner mocked)', () => {
+  const killRoute = (pid: number | string) => post(`/api/processes/${pid}/kill`).send({ confirm: true });
+  const runRoute = (pid: number) => post('/api/actions/kill-process/run').send({ pid, confirm: true });
+
+  it('passes the PID as a separate -ProcessId argument and logs the run', async () => {
+    run.mockResolvedValue({ success: true, message: 'Stopped notepad (PID 1234)', durationMs: 80 });
+    for (const res of [await killRoute(1234), await runRoute(1234)]) {
+      expect(res.status).toBe(200);
+      const [file, args] = run.mock.calls.at(-1)!;
+      expect(path.basename(file)).toBe('kill-process.ps1');
+      expect(args).toEqual(['-ProcessId', '1234']);
+      const log = await prisma.log.findUniqueOrThrow({ where: { id: res.body.logId } });
+      expect(log).toMatchObject({ source: 'action', actionId: 'kill-process', success: true });
+    }
+  });
+
+  it.each([
+    ['System (4)', 4],
+    ['this server', process.pid],
+    ['the parent of this server', process.ppid],
+  ])('refuses to kill %s with 403 on both routes, without running anything', async (_label, pid) => {
+    for (const res of [await killRoute(pid), await runRoute(pid)]) {
+      expect(res.status).toBe(403);
+      expect(res.body.message).toBe(`Refusing to kill protected process ${pid}`);
+    }
+    expect(run).not.toHaveBeenCalled();
+    expect(await prisma.log.count()).toBe(0);
+  });
+
+  it('rejects PID 0 (System Idle) at validation', async () => {
+    expect((await killRoute(0)).status).toBe(400);
+    expect((await runRoute(0)).status).toBe(400);
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it('requires a pid on the generic route', async () => {
+    const res = await post('/api/actions/kill-process/run').send({ confirm: true });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('kill-process needs a pid');
+  });
+});

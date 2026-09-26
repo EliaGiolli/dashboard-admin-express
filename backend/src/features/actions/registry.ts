@@ -29,6 +29,13 @@ export type ActionEntry = ActionDefinition & {
   buildArgs: (request: RunActionRequest) => string[];
 };
 
+// PIDs the server never kills, whichever route asks: 0 (System Idle) and 4 (System) are
+// the kernel, and killing this server or its parent (tsx/npm) would take the app down.
+// Critical Windows processes are also refused by name inside kill-process.ps1.
+export function isProtectedPid(pid: number): boolean {
+  return pid === 0 || pid === 4 || pid === process.pid || pid === process.ppid;
+}
+
 // Actions that act on the whole system take no parameters: a pid is a client mistake.
 function noArgs(request: RunActionRequest): string[] {
   if (request.pid !== undefined) throw new AppError('This action does not take a pid', 400);
@@ -77,6 +84,7 @@ export const actionRegistry: Record<ActionId, ActionEntry> = {
     script: 'kill-process.ps1',
     buildArgs(request) {
       if (request.pid === undefined) throw new AppError('kill-process needs a pid', 400);
+      if (isProtectedPid(request.pid)) throw new AppError(`Refusing to kill protected process ${request.pid}`, 403);
       return ['-ProcessId', String(request.pid)];
     },
   },
