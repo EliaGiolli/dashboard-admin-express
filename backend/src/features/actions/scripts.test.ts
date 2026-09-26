@@ -17,8 +17,8 @@ function syntaxErrors(file: string): string[] {
   return out.split(/\r?\n/).filter(Boolean);
 }
 
-// Scripts are added one task at a time (B-47..B-50); the "all present" check is in B-50.
-const implemented = (['flush-dns', 'clear-temp', 'empty-recyclebin'] as const).map((id) => actionRegistry[id]);
+// Every registry entry must have its script, and each must parse.
+const implemented = Object.values(actionRegistry);
 
 describe.skipIf(!onWindows)('action scripts', () => {
   it.each(implemented.map((e) => [e.id, e] as const))('%s exists and has no syntax errors', (_id, entry) => {
