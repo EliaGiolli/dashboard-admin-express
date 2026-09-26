@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { type Request, type Response, type NextFunction } from 'express';
+import { AppError } from '../errors/appError.js';
 
 // Comparing the key with `!==` leaks timing information proportional to how many
 // leading characters match. Not a strong defense here regardless (a key shipped
@@ -13,14 +14,17 @@ function timingSafeEqualStrings(a: string, b: string): boolean {
   return aBuf.length === bBuf.length && timingSafeEqual(aBuf, bBuf);
 }
 
-export const adminGuard = (req: Request, res: Response, next: NextFunction) => {
-  const apiKey = req.headers['x-api-key'];
+// Header name clients send the admin key in (documented as the `adminKey` scheme).
+export const ADMIN_KEY_HEADER = 'x-api-key';
+
+// Denies (403, standard error JSON) unless `x-api-key` equals API_SEGRETO. With no
+// API_SEGRETO configured, everything is denied rather than allowed.
+export const adminGuard = (req: Request, _res: Response, next: NextFunction) => {
+  const apiKey = req.headers[ADMIN_KEY_HEADER];
   const secret = process.env.API_SEGRETO;
 
   if (typeof apiKey !== 'string' || !secret || !timingSafeEqualStrings(apiKey, secret)) {
-    return res.status(403).json({
-      error: 'Access Denied: Invalid or missing API Key',
-    });
+    return next(new AppError('Access denied: invalid or missing API key', 403));
   }
 
   next();

@@ -1,13 +1,26 @@
 import { logPageSchema, logSchema } from '@pc-monitor/shared';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import { prisma } from '../../core/prisma.js';
 import { LoggerService } from './logs.service.js';
 
+const ADMIN_KEY = 'test-admin-key';
+const originalSecret = process.env.API_SEGRETO;
+beforeAll(() => {
+  process.env.API_SEGRETO = ADMIN_KEY;
+});
+afterAll(() => {
+  process.env.API_SEGRETO = originalSecret;
+});
+
 beforeEach(async () => {
   await prisma.log.deleteMany();
 });
+
+const patchLog = (id: number | string, body: object) =>
+  request(app).patch(`/api/logs/${id}`).set('x-api-key', ADMIN_KEY).send(body);
+const deleteLog = (id: number | string) => request(app).delete(`/api/logs/${id}`).set('x-api-key', ADMIN_KEY);
 
 async function createLog(logMessage = 'disk almost full', logLevel = 'warning') {
   const res = await request(app).post('/api/logs').send({ logMessage, logLevel });
@@ -71,24 +84,24 @@ describe('logs API', () => {
 
   it('archives a log with PATCH', async () => {
     const { body } = await createLog();
-    const res = await request(app).patch(`/api/logs/${body.newLog.id}`).send({ archived: true });
+    const res = await patchLog(body.newLog.id, { archived: true });
     expect(res.status).toBe(200);
     expect(res.body.archived).toBe(true);
   });
 
   it('rejects a non-boolean archived value and a bad id', async () => {
     const { body } = await createLog();
-    const badBody = await request(app).patch(`/api/logs/${body.newLog.id}`).send({ archived: 'yes' });
+    const badBody = await patchLog(body.newLog.id, { archived: 'yes' });
     expect(badBody.status).toBe(400);
-    const badId = await request(app).patch('/api/logs/abc').send({ archived: true });
+    const badId = await patchLog('abc', { archived: true });
     expect(badId.status).toBe(400);
   });
 
   it('deletes a log, and returns 404 for an unknown id', async () => {
     const { body } = await createLog();
-    const ok = await request(app).delete(`/api/logs/${body.newLog.id}`);
+    const ok = await deleteLog(body.newLog.id);
     expect(ok.status).toBe(200);
-    const again = await request(app).delete(`/api/logs/${body.newLog.id}`);
+    const again = await deleteLog(body.newLog.id);
     expect(again.status).toBe(404);
   });
 });
@@ -227,5 +240,56 @@ describe('GET /api/logs pagination', () => {
 
   it.each(['limit=0', 'limit=101', 'limit=abc', 'cursor=abc', 'cursor=1_2_3', 'cursor=-1_2'])('rejects %s with 400', async (qs) => {
     expect((await request(app).get(`/api/logs?${qs}`)).status).toBe(400);
+  });
+});
+
+describe('admin guard on PATCH and DELETE /api/logs/:id', () => {
+  async function seed() {
+    return prisma.log.create({ data: { logMessage: 'audit entry', logLevel: 'info', archived: false, source: 'action', actionId: 'flush-dns' } });
+  }
+
+  it.each([
+    ['no key', undefined],
+    ['a wrong key', 'nope'],
+    ['a key of the right length but wrong', 'x'.repeat(ADMIN_KEY.length)],
+  ])('refuses to archive or delete with %s (403) and changes nothing', async (_label, key) => {
+    const log = await seed();
+    const patch = request(app).patch(`/api/logs/${log.id}`);
+    const del = request(app).delete(`/api/logs/${log.id}`);
+    const [p, d] = await Promise.all([
+      (key ? patch.set('x-api-key', key) : patch).send({ archived: true }),
+      key ? del.set('x-api-key', key) : del,
+    ]);
+    expect(p.status).toBe(403);
+    expect(d.status).toBe(403);
+    expect(await prisma.log.findUniqueOrThrow({ where: { id: log.id } })).toMatchObject({ archived: false });
+  });
+
+  it('checks the key before anything else (no 404 or 400 leaks to unauthenticated callers)', async () => {
+    expect((await request(app).delete('/api/logs/999999')).status).toBe(403);
+    expect((await request(app).patch('/api/logs/abc').send({ archived: 'x' })).status).toBe(403);
+  });
+
+  it('archives, unarchives and deletes with the right key', async () => {
+    const log = await seed();
+    expect((await patchLog(log.id, { archived: true })).body.archived).toBe(true);
+    expect((await patchLog(log.id, { archived: false })).body.archived).toBe(false);
+    expect((await deleteLog(log.id)).status).toBe(200);
+    expect(await prisma.log.count()).toBe(0);
+  });
+
+  it('keeps reading and writing logs open (no key needed)', async () => {
+    expect((await request(app).get('/api/logs')).status).toBe(200);
+    expect((await request(app).post('/api/logs').send({ logMessage: 'x', logLevel: 'info' })).status).toBe(201);
+  });
+
+  it('still requires the dashboard origin even with the key', async () => {
+    const log = await seed();
+    const res = await request(app)
+      .delete(`/api/logs/${log.id}`)
+      .set('x-api-key', ADMIN_KEY)
+      .set('Origin', 'http://evil.example');
+    expect(res.status).toBe(403);
+    expect(await prisma.log.count()).toBe(1);
   });
 });
