@@ -1,6 +1,6 @@
 # Backend
 
-REST + WebSocket API that collects PC metrics, stores them and runs fix scripts.
+REST API + Socket.IO channel that collects PC metrics, stores them and runs fix scripts.
 
 <p>
   <img src="https://skillicons.dev/icons?i=ts,nodejs,express,prisma,sqlite,powershell" alt="backend stack" />
@@ -8,7 +8,7 @@ REST + WebSocket API that collects PC metrics, stores them and runs fix scripts.
 
 ## Stack
 
-Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, zod (via `@pc-monitor/shared`), `systeminformation`, Swagger UI (`@asteasolutions/zod-to-openapi` + `swagger-ui-express`), Vitest + Supertest, `tsx`. Planned: `ws`.
+Node.js, Express 5, TypeScript (ESM), Prisma 7 + SQLite, zod (via `@pc-monitor/shared`), `systeminformation`, Socket.IO, Swagger UI (`@asteasolutions/zod-to-openapi` + `swagger-ui-express`), Vitest + Supertest, `tsx`.
 
 ## Structure
 
@@ -16,7 +16,7 @@ Feature-based (`app -> features -> core -> shared`):
 
 ```
 src/
-├── core/        env, Prisma client, errors, security + validation middleware, ws hub
+├── core/        env, Prisma client, errors, security + validation middleware, Socket.IO hub (ws/)
 └── features/    health, metrics, processes, actions, logs, config
                  each: *.routes.ts, *.controller.ts, *.service.ts, index.ts, tests
 prisma/          schema + migrations
@@ -61,6 +61,21 @@ Swagger UI is served at `/api/docs` (raw spec at `/api/openapi.json`); the app l
 - **CPU temperature** is usually not readable: the first empty reading turns the sensor off for the rest of the run and the value stays `null` (never an error).
 - **Disk throughput** isn't available from `systeminformation` on Windows, and perf counter names are localized, so `diskIo.ts` keeps one PowerShell process reading the raw WMI counters (`Win32_PerfRawData_PerfDisk_PhysicalDisk`) every 2s and computes the rate from the deltas. It exits on its own when the server stops.
 - Rates are `null` until there is a previous reading to compare against.
+
+## Live channel
+
+`server.ts` attaches a Socket.IO server on `/ws` (`core/ws/hub.ts`) and starts `features/metrics/ticker.ts`:
+
+- **Ticker:** every 2s it collects a snapshot, emits `snapshot`, runs the alert check, then stores a `Sample`. Cycles never overlap: the next one is scheduled 2s after the previous *started*, or immediately if it took longer. A failing stage is logged and the loop continues; shutdown (Ctrl+C) waits for the in-flight cycle.
+- **Alerts** (`alerts.ts`): thresholds are re-read from `AppConfig` every cycle. A metric (CPU %, RAM %, fullest drive %) must be above its threshold 3 cycles in a row; it then writes a `monitor` warning log and emits `alert` with the log id. One alert per breach, 5 min cooldown per metric.
+- **Security:** WebSocket transport only, handshake refused for a foreign `Origin` (same rule as HTTP, `core/security/origin.ts`), clients can't send events.
+
+```js
+const socket = io('http://127.0.0.1:4317', { path: '/ws', transports: ['websocket'] });
+socket.on('snapshot', (s) => {}); // typed via ServerToClientEvents from @pc-monitor/shared
+```
+
+REST: `GET /api/metrics/history?minutes=1..360` (chart prefill, oldest first), `POST /api/metrics/record` (one sample now), `GET /api/config`, `PATCH /api/config/:key` (thresholds are 0-100).
 
 `features/processes` serves `GET /api/processes?sortBy=cpu|mem&limit=` (top N, System Idle Process excluded).
 
