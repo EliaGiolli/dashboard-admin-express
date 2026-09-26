@@ -1,4 +1,4 @@
-import { logSchema } from '@pc-monitor/shared';
+import { logPageSchema, logSchema } from '@pc-monitor/shared';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import app from '../../app.js';
@@ -43,7 +43,7 @@ describe('logs API', () => {
       { source: 'action', actionId: 'flush-dns', success: true, durationMs: 120 },
     );
     const res = await request(app).get('/api/logs');
-    expect(logSchema.parse(res.body[0])).toMatchObject({
+    expect(logSchema.parse(res.body.items[0])).toMatchObject({
       id: log.id,
       source: 'action',
       actionId: 'flush-dns',
@@ -66,7 +66,7 @@ describe('logs API', () => {
     await createLog('second', 'error');
     const res = await request(app).get('/api/logs');
     expect(res.status).toBe(200);
-    expect(res.body.map((l: { logMessage: string }) => l.logMessage)).toEqual(['second', 'first']);
+    expect(res.body.items.map((l: { logMessage: string }) => l.logMessage)).toEqual(['second', 'first']);
   });
 
   it('archives a log with PATCH', async () => {
@@ -108,7 +108,7 @@ describe('GET /api/logs filters', () => {
   const messages = async (qs: string) => {
     const res = await request(app).get(`/api/logs${qs}`);
     expect(res.status).toBe(200);
-    return res.body.map((l: { logMessage: string }) => l.logMessage);
+    return res.body.items.map((l: { logMessage: string }) => l.logMessage);
   };
 
   it('returns everything newest first without filters', async () => {
@@ -150,5 +150,82 @@ describe('GET /api/logs filters', () => {
     const res = await request(app).get(`/api/logs?${qs}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toContain(hint);
+  });
+});
+
+describe('GET /api/logs pagination', () => {
+  const T0 = Date.parse('2026-09-25T00:00:00Z');
+  // 7 logs; two pairs share a timestamp to exercise the id tie-break.
+  beforeEach(async () => {
+    const minutes = [0, 1, 2, 2, 3, 4, 4];
+    for (const [i, m] of minutes.entries()) {
+      await prisma.log.create({
+        data: { logMessage: `log ${i}`, logLevel: 'info', archived: false, timestamp: new Date(T0 + m * 60_000) },
+      });
+    }
+  });
+
+  async function page(qs: string) {
+    const res = await request(app).get(`/api/logs${qs}`);
+    expect(res.status).toBe(200);
+    return logPageSchema.parse(res.body);
+  }
+
+  async function walk(qs: string) {
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    let pages = 0;
+    do {
+      const p = await page(`${qs}${cursor ? `&cursor=${cursor}` : ''}`);
+      seen.push(...p.items.map((l) => l.logMessage));
+      cursor = p.nextCursor;
+      pages++;
+    } while (cursor && pages < 20);
+    return { seen, pages };
+  }
+
+  it('walks every log exactly once, newest first, with the id breaking timestamp ties', async () => {
+    const { seen, pages } = await walk('?limit=3');
+    expect(seen).toEqual(['log 6', 'log 5', 'log 4', 'log 3', 'log 2', 'log 1', 'log 0']);
+    expect(pages).toBe(3);
+  });
+
+  it('returns nextCursor null on the last page, also when it is exactly full', async () => {
+    expect((await page('?limit=7')).nextCursor).toBeNull();
+    expect((await page('?limit=100')).items).toHaveLength(7);
+    expect((await page('?limit=6')).nextCursor).not.toBeNull();
+  });
+
+  it('defaults to 50 per page', async () => {
+    for (let i = 0; i < 55; i++) {
+      await prisma.log.create({ data: { logMessage: `bulk ${i}`, logLevel: 'info', archived: false } });
+    }
+    const p = await page('');
+    expect(p.items).toHaveLength(50);
+    expect(p.nextCursor).not.toBeNull();
+  });
+
+  it('does not repeat or skip rows when new logs arrive between pages', async () => {
+    const first = await page('?limit=3');
+    await prisma.log.create({ data: { logMessage: 'arrived later', logLevel: 'warning', archived: false } });
+    const second = await page(`?limit=3&cursor=${first.nextCursor}`);
+    expect(second.items.map((l) => l.logMessage)).toEqual(['log 3', 'log 2', 'log 1']);
+  });
+
+  it('keeps working when the row under the cursor was deleted', async () => {
+    const first = await page('?limit=3');
+    await prisma.log.delete({ where: { id: first.items.at(-1)!.id } });
+    const second = await page(`?limit=3&cursor=${first.nextCursor}`);
+    expect(second.items.map((l) => l.logMessage)).toEqual(['log 3', 'log 2', 'log 1']);
+  });
+
+  it('paginates within a filter', async () => {
+    await prisma.log.updateMany({ where: { logMessage: { in: ['log 1', 'log 4', 'log 6'] } }, data: { logLevel: 'error' } });
+    const { seen } = await walk('?level=error&limit=2');
+    expect(seen).toEqual(['log 6', 'log 4', 'log 1']);
+  });
+
+  it.each(['limit=0', 'limit=101', 'limit=abc', 'cursor=abc', 'cursor=1_2_3', 'cursor=-1_2'])('rejects %s with 400', async (qs) => {
+    expect((await request(app).get(`/api/logs?${qs}`)).status).toBe(400);
   });
 });

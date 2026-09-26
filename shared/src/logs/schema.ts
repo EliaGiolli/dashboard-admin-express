@@ -49,8 +49,14 @@ export type LogIdParams = z.infer<typeof logIdParamsSchema>;
 // would turn the string "false" into true.)
 const queryBoolean = z.enum(['true', 'false']).transform((v) => v === 'true');
 
-// GET /api/logs filters. All optional and combined with AND. Dates are ISO 8601 and
-// inclusive; `from` must not be after `to`.
+export const LOG_PAGE_MAX = 100;
+
+// GET /api/logs query. Filters are optional and combined with AND; dates are ISO 8601
+// and inclusive, and `from` must not be after `to`.
+// Pagination is keyset-based: `cursor` is the `nextCursor` of the previous page, an
+// opaque "<timestampMs>_<id>" of its last item. Unlike an offset, it doesn't skip or
+// repeat rows when new logs arrive between pages (the ticker writes alerts at any time),
+// and it keeps working if the row it points to is deleted.
 export const logQuerySchema = z
   .object({
     level: logLevelSchema.optional(),
@@ -59,9 +65,17 @@ export const logQuerySchema = z
     archived: queryBoolean.optional(),
     from: z.iso.datetime({ offset: true }).optional(),
     to: z.iso.datetime({ offset: true }).optional(),
+    limit: z.coerce.number().int().min(1).max(LOG_PAGE_MAX).default(50),
+    cursor: z.string().regex(/^\d{1,15}_\d{1,10}$/, 'must be a nextCursor from a previous page').optional(),
   })
   .refine((q) => !q.from || !q.to || Date.parse(q.from) <= Date.parse(q.to), {
     message: '`from` must not be after `to`',
     path: ['from'],
   });
 export type LogQuery = z.infer<typeof logQuerySchema>;
+
+export const logPageSchema = z.object({
+  items: z.array(logSchema),
+  nextCursor: z.string().nullable(), // null on the last page
+});
+export type LogPage = z.infer<typeof logPageSchema>;

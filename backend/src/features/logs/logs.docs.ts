@@ -1,12 +1,12 @@
 import {
   createLogSchema,
   logIdParamsSchema,
+  logPageSchema,
   logQuerySchema,
   logSchema,
   messageResponseSchema,
   updateLogSchema,
 } from '@pc-monitor/shared';
-import { z } from 'zod';
 import { errorResponses, json, type ApiRegistry } from '../../core/openapi/index.js';
 
 export function registerLogsDocs(registry: ApiRegistry) {
@@ -14,12 +14,12 @@ export function registerLogsDocs(registry: ApiRegistry) {
     method: 'get',
     path: '/api/logs',
     tags: ['Logs'],
-    summary: 'List logs, newest first, with optional filters',
+    summary: 'List logs, newest first, with filters and pagination',
     description:
-      'Filters combine with AND. `source=action` lists fix-action runs (the audit trail), `source=monitor` threshold alerts. `from`/`to` are inclusive ISO 8601 timestamps.',
+      'Filters combine with AND. `source=action` lists fix-action runs (the audit trail), `source=monitor` threshold alerts. `from`/`to` are inclusive ISO 8601 timestamps. Pages hold `limit` items (max 100); pass `nextCursor` as `cursor` to get the next page, until it is null.',
     request: { query: logQuerySchema },
     responses: {
-      200: { description: 'Logs', content: json(z.array(logSchema)) },
+      200: { description: 'One page of logs', content: json(logPageSchema) },
       400: errorResponses[400],
       500: errorResponses[500],
     },
