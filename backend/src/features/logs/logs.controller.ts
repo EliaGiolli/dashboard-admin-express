@@ -1,4 +1,4 @@
-import type { CreateLog, LogIdParams, UpdateLog } from '@pc-monitor/shared';
+import type { CreateLog, LogIdParams, LogQuery, UpdateLog } from '@pc-monitor/shared';
 import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../../core/errors/appError.js';
 import { isRecordNotFound } from '../../core/errors/prismaErrors.js';
@@ -12,9 +12,9 @@ function toAppError(err: unknown, id: number, fallback: string): AppError {
     : new AppError(fallback, 500);
 }
 
-export async function getLogsController(_req: Request, res: Response, next: NextFunction) {
+export async function getLogsController(req: Request, res: Response, next: NextFunction) {
   try {
-    res.status(200).json(await logService.readLogs());
+    res.status(200).json(await logService.readLogs(req.query as unknown as LogQuery));
   } catch {
     next(new AppError('Unable to fetch logs from database', 500));
   }

@@ -1,4 +1,4 @@
-import { createLogSchema, logIdParamsSchema, updateLogSchema } from '@pc-monitor/shared';
+import { createLogSchema, logIdParamsSchema, logQuerySchema, updateLogSchema } from '@pc-monitor/shared';
 import { Router } from 'express';
 import { validate } from '../../core/validation/validate.js';
 import {
@@ -10,7 +10,7 @@ import {
 
 const loggerRouter = Router();
 
-loggerRouter.get('/', getLogsController);
+loggerRouter.get('/', validate({ query: logQuerySchema }), getLogsController);
 loggerRouter.post('/', validate({ body: createLogSchema }), writeLogsController);
 loggerRouter.delete('/:id', validate({ params: logIdParamsSchema }), deleteLogsController);
 loggerRouter.patch(

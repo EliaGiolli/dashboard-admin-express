@@ -1,6 +1,7 @@
 import {
   createLogSchema,
   logIdParamsSchema,
+  logQuerySchema,
   logSchema,
   messageResponseSchema,
   updateLogSchema,
@@ -13,9 +14,13 @@ export function registerLogsDocs(registry: ApiRegistry) {
     method: 'get',
     path: '/api/logs',
     tags: ['Logs'],
-    summary: 'List all logs, newest first',
+    summary: 'List logs, newest first, with optional filters',
+    description:
+      'Filters combine with AND. `source=action` lists fix-action runs (the audit trail), `source=monitor` threshold alerts. `from`/`to` are inclusive ISO 8601 timestamps.',
+    request: { query: logQuerySchema },
     responses: {
       200: { description: 'Logs', content: json(z.array(logSchema)) },
+      400: errorResponses[400],
       500: errorResponses[500],
     },
   });

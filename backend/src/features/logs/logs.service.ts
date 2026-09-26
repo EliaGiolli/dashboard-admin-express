@@ -1,10 +1,28 @@
-import type { CreateLog, LogAudit } from '@pc-monitor/shared';
+import type { CreateLog, LogAudit, LogQuery } from '@pc-monitor/shared';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../core/prisma.js';
 import type { Log as LogModel } from '../../generated/prisma/client.js';
 
+// Translates the validated filters into a Prisma where clause (no raw SQL).
+export function toWhere({ level, source, actionId, archived, from, to }: LogQuery): Prisma.LogWhereInput {
+  const where: Prisma.LogWhereInput = {};
+  if (level) where.logLevel = level;
+  if (source) where.source = source;
+  if (actionId) where.actionId = actionId;
+  if (archived !== undefined) where.archived = archived;
+  if (from || to) {
+    where.timestamp = {
+      ...(from ? { gte: new Date(from) } : {}),
+      ...(to ? { lte: new Date(to) } : {}),
+    };
+  }
+  return where;
+}
+
 export class LoggerService {
-  async readLogs(): Promise<LogModel[]> {
-    return prisma.log.findMany({ orderBy: { timestamp: 'desc' } });
+  // Newest first; ties on the same timestamp are broken by id so the order is stable.
+  async readLogs(query: LogQuery = {}): Promise<LogModel[]> {
+    return prisma.log.findMany({ where: toWhere(query), orderBy: [{ timestamp: 'desc' }, { id: 'desc' }] });
   }
 
   async writeLogs({ logMessage, logLevel }: CreateLog, audit?: LogAudit): Promise<LogModel> {

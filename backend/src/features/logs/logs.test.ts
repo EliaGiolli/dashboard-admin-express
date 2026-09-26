@@ -92,3 +92,63 @@ describe('logs API', () => {
     expect(again.status).toBe(404);
   });
 });
+
+describe('GET /api/logs filters', () => {
+  const at = (iso: string) => new Date(iso);
+  beforeEach(async () => {
+    await prisma.log.createMany({
+      data: [
+        { logMessage: 'manual info', logLevel: 'info', archived: false, source: 'manual', timestamp: at('2026-09-20T10:00:00Z') },
+        { logMessage: 'cpu alert', logLevel: 'warning', archived: false, source: 'monitor', timestamp: at('2026-09-21T10:00:00Z') },
+        { logMessage: 'dns ok', logLevel: 'info', archived: true, source: 'action', actionId: 'flush-dns', success: true, durationMs: 900, timestamp: at('2026-09-22T10:00:00Z') },
+        { logMessage: 'temp failed', logLevel: 'error', archived: false, source: 'action', actionId: 'clear-temp', success: false, durationMs: 60000, timestamp: at('2026-09-23T10:00:00Z') },
+      ],
+    });
+  });
+  const messages = async (qs: string) => {
+    const res = await request(app).get(`/api/logs${qs}`);
+    expect(res.status).toBe(200);
+    return res.body.map((l: { logMessage: string }) => l.logMessage);
+  };
+
+  it('returns everything newest first without filters', async () => {
+    expect(await messages('')).toEqual(['temp failed', 'dns ok', 'cpu alert', 'manual info']);
+  });
+
+  it('filters by level, source and actionId', async () => {
+    expect(await messages('?level=error')).toEqual(['temp failed']);
+    expect(await messages('?source=action')).toEqual(['temp failed', 'dns ok']);
+    expect(await messages('?source=monitor')).toEqual(['cpu alert']);
+    expect(await messages('?actionId=flush-dns')).toEqual(['dns ok']);
+  });
+
+  it('filters by archived, reading "false" as false', async () => {
+    expect(await messages('?archived=true')).toEqual(['dns ok']);
+    expect(await messages('?archived=false')).toEqual(['temp failed', 'cpu alert', 'manual info']);
+  });
+
+  it('filters by an inclusive date range', async () => {
+    expect(await messages('?from=2026-09-21T10:00:00Z&to=2026-09-22T10:00:00Z')).toEqual(['dns ok', 'cpu alert']);
+    expect(await messages('?from=2026-09-23T00:00:00Z')).toEqual(['temp failed']);
+    expect(await messages('?to=2026-09-20T23:59:59%2B02:00')).toEqual(['manual info']); // offset allowed
+  });
+
+  it('combines filters with AND', async () => {
+    expect(await messages('?source=action&archived=false&level=error')).toEqual(['temp failed']);
+    expect(await messages('?source=monitor&level=error')).toEqual([]);
+  });
+
+  it.each([
+    ['level=debug', 'query.level'],
+    ['source=user', 'query.source'],
+    ['archived=yes', 'query.archived'],
+    ['archived=1', 'query.archived'],
+    ['from=yesterday', 'query.from'],
+    ['from=2026-09-23T00:00:00Z&to=2026-09-20T00:00:00Z', 'must not be after'],
+    ['actionId=../x', 'query.actionId'],
+  ])('rejects %s with 400', async (qs, hint) => {
+    const res = await request(app).get(`/api/logs?${qs}`);
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain(hint);
+  });
+});

@@ -44,3 +44,24 @@ export const logIdParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 export type LogIdParams = z.infer<typeof logIdParamsSchema>;
+
+// Query-string boolean: only the literal strings "true"/"false". (z.coerce.boolean()
+// would turn the string "false" into true.)
+const queryBoolean = z.enum(['true', 'false']).transform((v) => v === 'true');
+
+// GET /api/logs filters. All optional and combined with AND. Dates are ISO 8601 and
+// inclusive; `from` must not be after `to`.
+export const logQuerySchema = z
+  .object({
+    level: logLevelSchema.optional(),
+    source: logSourceSchema.optional(),
+    actionId: z.string().regex(/^[a-z0-9-]{1,40}$/).optional(),
+    archived: queryBoolean.optional(),
+    from: z.iso.datetime({ offset: true }).optional(),
+    to: z.iso.datetime({ offset: true }).optional(),
+  })
+  .refine((q) => !q.from || !q.to || Date.parse(q.from) <= Date.parse(q.to), {
+    message: '`from` must not be after `to`',
+    path: ['from'],
+  });
+export type LogQuery = z.infer<typeof logQuerySchema>;
