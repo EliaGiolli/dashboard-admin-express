@@ -21,7 +21,7 @@ beforeEach(async () => {
   await prisma.sample.deleteMany();
 });
 
-describe('system API', () => {
+describe('POST /api/metrics/record', () => {
   it('records a sample matching the shared schema', async () => {
     const res = await request(app).post('/api/metrics/record');
     expect(res.status).toBe(201);
@@ -43,18 +43,32 @@ describe('system API', () => {
     });
   });
 
-  it('lists recorded samples as JSON', async () => {
+  it('shows up in the history right away', async () => {
     await request(app).post('/api/metrics/record');
     await request(app).post('/api/metrics/record');
-    const res = await request(app).get('/api/metrics');
-    expect(res.status).toBe(200);
+    const res = await request(app).get('/api/metrics/history?minutes=1');
     expect(res.body).toHaveLength(2);
-    for (const sample of res.body) expect(systemSampleSchema.parse(sample)).toBeTruthy();
   });
 
-  it('validates the settings body', async () => {
-    const res = await request(app).patch('/api/metrics/settings').send({ key: 'lower', value: '1' });
-    expect(res.status).toBe(400);
+  it('refuses a foreign origin (mutating route)', async () => {
+    const res = await request(app).post('/api/metrics/record').set('Origin', 'http://evil.example');
+    expect(res.status).toBe(403);
+    expect(await prisma.sample.count()).toBe(0);
+  });
+});
+
+describe('removed routes', () => {
+  // Superseded in B7: history replaces the latest-20 list, and thresholds are edited
+  // through PATCH /api/config/:key, which checks the stored type.
+  it.each([
+    ['get', '/api/system'],
+    ['get', '/api/metrics'],
+    ['patch', '/api/metrics/settings'],
+    ['patch', '/api/system/settings'],
+    ['get', '/api/env'],
+  ] as const)('%s %s is gone (404)', async (method, path) => {
+    const res = await request(app)[method](path).send({ key: 'CPU_THRESHOLD', value: '1' });
+    expect(res.status).toBe(404);
   });
 });
 

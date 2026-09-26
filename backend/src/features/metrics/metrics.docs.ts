@@ -1,28 +1,12 @@
-import {
-  appConfigSchema,
-  historyQuerySchema,
-  configKeyParamsSchema,
-  systemSampleSchema,
-  updateConfigSchema,
-} from '@pc-monitor/shared';
+import { historyQuerySchema, systemSampleSchema } from '@pc-monitor/shared';
 import { z } from 'zod';
 import { errorResponses, json, type ApiRegistry } from '../../core/openapi/index.js';
 
 export function registerMetricsDocs(registry: ApiRegistry) {
   registry.registerPath({
     method: 'get',
-    path: '/api/metrics',
-    tags: ['System'],
-    summary: 'Latest stored system samples',
-    responses: {
-      200: { description: 'Samples, newest first', content: json(z.array(systemSampleSchema)) },
-      500: errorResponses[500],
-    },
-  });
-  registry.registerPath({
-    method: 'get',
     path: '/api/metrics/history',
-    tags: ['System'],
+    tags: ['Metrics'],
     summary: 'Stored samples from the last N minutes, oldest first',
     description:
       'Used to prefill the charts before live WebSocket snapshots arrive. One sample is stored about every 2 seconds; `minutes` is capped to keep the response small.',
@@ -36,31 +20,12 @@ export function registerMetricsDocs(registry: ApiRegistry) {
   registry.registerPath({
     method: 'post',
     path: '/api/metrics/record',
-    tags: ['System'],
+    tags: ['Metrics'],
     summary: 'Take and store a system sample now',
     description:
       'Collects a real snapshot (about 1-2s on Windows). CPU temperature is null when the sensor is not readable; disk and network rates are null until a previous reading exists.',
     responses: {
       201: { description: 'Stored sample', content: json(systemSampleSchema) },
-      500: errorResponses[500],
-    },
-  });
-  registry.registerPath({
-    method: 'patch',
-    path: '/api/metrics/settings',
-    tags: ['System'],
-    summary: 'Update a monitoring threshold',
-    request: {
-      body: {
-        required: true,
-        content: json(
-          z.object({ key: configKeyParamsSchema.shape.key, value: updateConfigSchema.shape.value }),
-        ),
-      },
-    },
-    responses: {
-      200: { description: 'Updated setting', content: json(appConfigSchema) },
-      400: errorResponses[400],
       500: errorResponses[500],
     },
   });

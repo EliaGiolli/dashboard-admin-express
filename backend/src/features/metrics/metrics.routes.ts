@@ -1,23 +1,13 @@
-import { configKeyParamsSchema, historyQuerySchema, updateConfigSchema } from "@pc-monitor/shared";
-import { Router } from "express";
-import { z } from "zod";
-import { validate } from "../../core/validation/validate.js";
-import { 
-    getSystemStats, 
-    getHistoryController,
-    recordCurrentStats, 
-    patchSystemSettings 
-} from "./metrics.controller.js";
+import { historyQuerySchema } from '@pc-monitor/shared';
+import { Router } from 'express';
+import { validate } from '../../core/validation/validate.js';
+import { getHistoryController, recordSnapshotController } from './metrics.controller.js';
 
-const systemRouter = Router();
+// Mounted at /api/metrics. Live data goes over the WebSocket (/ws); these routes cover
+// the chart prefill and a manual, on-demand sample. Thresholds live in /api/config.
+const metricsRouter = Router();
 
-systemRouter.get('/', getSystemStats);
-systemRouter.get('/history', validate({ query: historyQuerySchema }), getHistoryController);
-systemRouter.post('/record', recordCurrentStats);
-systemRouter.patch(
-    '/settings',
-    validate({ body: z.object({ key: configKeyParamsSchema.shape.key, value: updateConfigSchema.shape.value }) }),
-    patchSystemSettings,
-);
+metricsRouter.get('/history', validate({ query: historyQuerySchema }), getHistoryController);
+metricsRouter.post('/record', recordSnapshotController);
 
-export default systemRouter;
+export default metricsRouter;

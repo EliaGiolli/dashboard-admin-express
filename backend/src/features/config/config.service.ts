@@ -16,6 +16,10 @@ export function getSafeEnv(): SafeEnv {
   return result;
 }
 
+function isThresholdKey(key: string): key is ThresholdKey {
+  return (thresholdKeys as readonly string[]).includes(key);
+}
+
 function isValidForType(value: string, type: ConfigValueType): boolean {
   if (type === 'number') return value.trim() !== '' && Number.isFinite(Number(value));
   if (type === 'boolean') return value === 'true' || value === 'false';
@@ -29,6 +33,12 @@ export async function updateConfigValue(key: string, value: string): Promise<App
   const type = existing.type as ConfigValueType;
   if (!isValidForType(value, type)) {
     throw new AppError(`Value for ${key} must be a valid ${type}`, 400);
+  }
+  // Thresholds are percentages. getThresholds() ignores anything else, so an
+  // out-of-range value would silently switch that alert off: refuse it here instead.
+  if (isThresholdKey(key)) {
+    const n = Number(value);
+    if (n < 0 || n > 100) throw new AppError(`${key} must be a percentage between 0 and 100`, 400);
   }
   return (await prisma.appConfig.update({ where: { key }, data: { value } })) as AppConfig;
 }

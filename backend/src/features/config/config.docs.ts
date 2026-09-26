@@ -9,14 +9,14 @@ import { errorResponses, json, type ApiRegistry } from '../../core/openapi/index
 export function registerConfigDocs(registry: ApiRegistry) {
   registry.registerPath({
     method: 'get',
-    path: '/api/env',
+    path: '/api/config',
     tags: ['Config'],
     summary: 'Whitelisted environment variables and dynamic settings',
     responses: { 200: { description: 'Safe environment', content: json(safeEnvSchema) } },
   });
   registry.registerPath({
     method: 'patch',
-    path: '/api/env/{key}',
+    path: '/api/config/{key}',
     tags: ['Config'],
     summary: 'Update a stored setting (e.g. a monitoring threshold)',
     request: { params: configKeyParamsSchema, body: { required: true, content: json(updateConfigSchema) } },

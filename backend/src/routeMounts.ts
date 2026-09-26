@@ -15,7 +15,7 @@ export interface RouteMount {
 // every mounted route is documented.
 export const routeMounts: RouteMount[] = [
   { prefix: '/health', router: healthRouter },
-  { prefix: '/env', router: configRouter },
+  { prefix: '/config', router: configRouter },
   { prefix: '/metrics', router: metricsRouter },
   { prefix: '/logs', router: logsRouter },
   { prefix: '/processes', router: processesRouter },
