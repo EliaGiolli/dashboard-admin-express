@@ -37,4 +37,38 @@ describe('OpenAPI coverage', () => {
 
     expect(missing).toEqual([]);
   });
+
+  it('documents nothing under /api that is not mounted (no stale docs for removed routes)', () => {
+    const document = buildOpenApiDocument(registry);
+    const mounted = new Set<string>();
+    for (const { prefix, router } of routeMounts) {
+      for (const layer of router.stack as unknown as ExpressRouteLayer[]) {
+        if (!layer.route) continue;
+        const suffix = layer.route.path === '/' ? '' : layer.route.path;
+        for (const method of Object.keys(layer.route.methods)) {
+          mounted.add(`${method.toUpperCase()} /api${toOpenApiPath(prefix + suffix)}`);
+        }
+      }
+    }
+
+    const stale: string[] = [];
+    for (const [path, item] of Object.entries(document.paths ?? {})) {
+      if (!path.startsWith('/api/')) continue; // /ws is documented but served by Socket.IO
+      for (const method of Object.keys(item ?? {})) {
+        const key = `${method.toUpperCase()} ${path}`;
+        if (!mounted.has(key)) stale.push(key);
+      }
+    }
+    expect(stale).toEqual([]);
+  });
+
+  it('documents the Socket.IO channel and its event payloads', () => {
+    const document = buildOpenApiDocument(registry);
+    const ws = document.paths?.['/ws']?.get;
+    expect(ws).toBeDefined();
+    // both event payloads appear in the documented frame schema
+    const frames = JSON.stringify(ws?.responses?.['101']);
+    for (const event of ['snapshot', 'alert']) expect(frames).toContain(`"${event}"`);
+    for (const field of ['perCore', 'usedPercent', 'rxBps', 'threshold', 'logId']) expect(frames).toContain(field);
+  });
 });

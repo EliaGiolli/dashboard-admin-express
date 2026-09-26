@@ -14,6 +14,7 @@ export type ApiRegistry = OpenAPIRegistry;
 
 export const errorResponses = {
   400: { description: 'Invalid request', content: { 'application/json': { schema: errorResponseSchema } } },
+  403: { description: 'Origin not allowed', content: { 'application/json': { schema: errorResponseSchema } } },
   404: { description: 'Not found', content: { 'application/json': { schema: errorResponseSchema } } },
   500: { description: 'Server error', content: { 'application/json': { schema: errorResponseSchema } } },
 } as const;
@@ -29,7 +30,7 @@ export function buildOpenApiDocument(reg: ApiRegistry = registry) {
       title: 'PC Monitor API',
       version: '1.0.0',
       description:
-        'Local PC monitoring API. Runs on 127.0.0.1 only. Live metrics will also be pushed over the WebSocket endpoint /ws (planned).',
+        'Local PC monitoring API. Runs on 127.0.0.1 only. Live metrics and alerts are pushed over Socket.IO on /ws (see the "Live (Socket.IO)" section). Mutating requests from a browser must come from the dashboard origin (403 otherwise) and use Content-Type: application/json.',
     },
     servers: [{ url: 'http://127.0.0.1:4317' }],
   });

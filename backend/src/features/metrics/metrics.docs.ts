@@ -26,6 +26,7 @@ export function registerMetricsDocs(registry: ApiRegistry) {
       'Collects a real snapshot (about 1-2s on Windows). CPU temperature is null when the sensor is not readable; disk and network rates are null until a previous reading exists.',
     responses: {
       201: { description: 'Stored sample', content: json(systemSampleSchema) },
+      403: errorResponses[403],
       500: errorResponses[500],
     },
   });
