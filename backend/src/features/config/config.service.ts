@@ -1,4 +1,4 @@
-import type { AppConfig, ConfigValueType, SafeEnv } from '@pc-monitor/shared';
+import { thresholdKeys, type AppConfig, type ConfigValueType, type SafeEnv, type ThresholdKey } from '@pc-monitor/shared';
 import { AppError } from '../../core/errors/appError.js';
 import { prisma } from '../../core/prisma.js';
 import { envWhitelist } from './envWhitelist.js';
@@ -31,4 +31,16 @@ export async function updateConfigValue(key: string, value: string): Promise<App
     throw new AppError(`Value for ${key} must be a valid ${type}`, 400);
   }
   return (await prisma.appConfig.update({ where: { key }, data: { value } })) as AppConfig;
+}
+
+// Current alert thresholds in percent. A key that is missing, not a number, or outside
+// 0-100 is left out, which disables alerts for that metric instead of alerting on junk.
+export async function getThresholds(): Promise<Partial<Record<ThresholdKey, number>>> {
+  const rows = await prisma.appConfig.findMany({ where: { key: { in: [...thresholdKeys] } } });
+  const result: Partial<Record<ThresholdKey, number>> = {};
+  for (const row of rows) {
+    const value = row.value.trim() === '' ? Number.NaN : Number(row.value);
+    if (Number.isFinite(value) && value >= 0 && value <= 100) result[row.key as ThresholdKey] = value;
+  }
+  return result;
 }

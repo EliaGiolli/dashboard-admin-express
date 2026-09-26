@@ -5,7 +5,7 @@ import { HOST, PORT, RETENTION_DAYS } from './core/config/env.js';
 import { prisma } from './core/prisma.js';
 import { createWsHub } from './core/ws/index.js';
 import { seedDefaultConfig } from './features/config/index.js';
-import { createMetricsTicker } from './features/metrics/index.js';
+import { createAlertMonitor, createMetricsTicker } from './features/metrics/index.js';
 import { pruneOlderThan } from './retention.js';
 import { registerShutdown } from './shutdown.js';
 
@@ -23,8 +23,10 @@ async function main() {
 
   const server = startServer();
   const hub = createWsHub(server);
+  const alerts = createAlertMonitor({ broadcast: (alert) => hub.broadcast('alert', alert) });
   const ticker = createMetricsTicker({
     broadcast: (snapshot) => hub.broadcast('snapshot', snapshot),
+    afterBroadcast: (snapshot) => alerts.check(snapshot),
   });
   ticker.start();
 
