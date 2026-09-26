@@ -69,3 +69,11 @@ export const snapshotSchema = z.object({
   network: networkStatsSchema,
 });
 export type Snapshot = z.infer<typeof snapshotSchema>;
+
+// GET /api/metrics/history?minutes= . Bounded: one sample every 2s means 60 min is
+// ~1,800 rows; the cap (6h, ~10,800 rows) keeps a single response around 2 MB.
+export const HISTORY_MAX_MINUTES = 360;
+export const historyQuerySchema = z.object({
+  minutes: z.coerce.number().int().min(1).max(HISTORY_MAX_MINUTES).default(60),
+});
+export type HistoryQuery = z.infer<typeof historyQuerySchema>;

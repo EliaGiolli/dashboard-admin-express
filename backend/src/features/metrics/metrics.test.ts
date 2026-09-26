@@ -1,8 +1,9 @@
-import { systemSampleSchema } from '@pc-monitor/shared';
+import { HISTORY_MAX_MINUTES, systemSampleSchema, type NewSample, type SystemSample } from '@pc-monitor/shared';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import app from '../../app.js';
 import { prisma } from '../../core/prisma.js';
+import { insertSample } from './samples.service.js';
 
 // No real systeminformation calls (they spawn PowerShell); a fixed snapshot is recorded instead.
 vi.mock('./snapshot.js', async (importOriginal) => ({
@@ -20,15 +21,15 @@ beforeEach(async () => {
   await prisma.sample.deleteMany();
 });
 
-describe('system API', () => {
+describe('POST /api/metrics/record', () => {
   it('records a sample matching the shared schema', async () => {
-    const res = await request(app).post('/api/system/record');
+    const res = await request(app).post('/api/metrics/record');
     expect(res.status).toBe(201);
     expect(systemSampleSchema.parse(res.body)).toBeTruthy();
   });
 
   it('stores the collected snapshot, keeping unmeasurable values as null', async () => {
-    const res = await request(app).post('/api/system/record');
+    const res = await request(app).post('/api/metrics/record');
     const row = await prisma.sample.findUniqueOrThrow({ where: { id: res.body.id } });
     expect(row).toMatchObject({
       cpuTotal: 37.5,
@@ -42,17 +43,75 @@ describe('system API', () => {
     });
   });
 
-  it('lists recorded samples as JSON', async () => {
-    await request(app).post('/api/system/record');
-    await request(app).post('/api/system/record');
-    const res = await request(app).get('/api/system');
-    expect(res.status).toBe(200);
+  it('shows up in the history right away', async () => {
+    await request(app).post('/api/metrics/record');
+    await request(app).post('/api/metrics/record');
+    const res = await request(app).get('/api/metrics/history?minutes=1');
     expect(res.body).toHaveLength(2);
+  });
+
+  it('refuses a foreign origin (mutating route)', async () => {
+    const res = await request(app).post('/api/metrics/record').set('Origin', 'http://evil.example');
+    expect(res.status).toBe(403);
+    expect(await prisma.sample.count()).toBe(0);
+  });
+});
+
+describe('removed routes', () => {
+  // Superseded in B7: history replaces the latest-20 list, and thresholds are edited
+  // through PATCH /api/config/:key, which checks the stored type.
+  it.each([
+    ['get', '/api/system'],
+    ['get', '/api/metrics'],
+    ['patch', '/api/metrics/settings'],
+    ['patch', '/api/system/settings'],
+    ['get', '/api/env'],
+  ] as const)('%s %s is gone (404)', async (method, path) => {
+    const res = await request(app)[method](path).send({ key: 'CPU_THRESHOLD', value: '1' });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /api/metrics/history', () => {
+  const base: NewSample = {
+    cpuTotal: 10,
+    cpuTemp: null,
+    ramUsed: 1,
+    ramTotal: 2,
+    diskReadBps: null,
+    diskWriteBps: null,
+    netRxBps: null,
+    netTxBps: null,
+  };
+  const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000);
+
+  it('returns samples of the last 60 minutes by default, oldest first', async () => {
+    await insertSample({ ...base, cpuTotal: 3 }, minutesAgo(1));
+    await insertSample({ ...base, cpuTotal: 99 }, minutesAgo(61));
+    await insertSample({ ...base, cpuTotal: 1 }, minutesAgo(59));
+
+    const res = await request(app).get('/api/metrics/history');
+    expect(res.status).toBe(200);
+    expect(res.body.map((s: SystemSample) => s.cpuTotal)).toEqual([1, 3]);
     for (const sample of res.body) expect(systemSampleSchema.parse(sample)).toBeTruthy();
   });
 
-  it('validates the settings body', async () => {
-    const res = await request(app).patch('/api/system/settings').send({ key: 'lower', value: '1' });
+  it('honours the minutes parameter', async () => {
+    await insertSample({ ...base, cpuTotal: 1 }, minutesAgo(4));
+    await insertSample({ ...base, cpuTotal: 2 }, minutesAgo(6));
+    const res = await request(app).get('/api/metrics/history?minutes=5');
+    expect(res.body.map((s: SystemSample) => s.cpuTotal)).toEqual([1]);
+  });
+
+  it('accepts the maximum window and returns an empty list when nothing is stored', async () => {
+    const res = await request(app).get(`/api/metrics/history?minutes=${HISTORY_MAX_MINUTES}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it.each(['0', '-5', '1.5', 'abc', String(HISTORY_MAX_MINUTES + 1)])('rejects minutes=%s with 400', async (minutes) => {
+    const res = await request(app).get(`/api/metrics/history?minutes=${minutes}`);
     expect(res.status).toBe(400);
+    expect(res.body.message).toContain('query.minutes');
   });
 });

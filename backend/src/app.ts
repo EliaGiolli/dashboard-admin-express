@@ -14,6 +14,7 @@ import { registerProcessesDocs } from './features/processes/index.js';
 import { AppError } from './core/errors/appError.js';
 import { globalErrorHandler } from './core/errors/errorHandler.js';
 import { createDocsRouter, registry } from './core/openapi/index.js';
+import { registerWsDocs } from './core/ws/index.js';
 import { corsMiddleware } from './core/security/cors.js';
 import { originGuard } from './core/security/originGuard.js';
 import { requireJsonContentType } from './core/security/requireJson.js';
@@ -24,6 +25,7 @@ registerConfigDocs(registry);
 registerMetricsDocs(registry);
 registerLogsDocs(registry);
 registerProcessesDocs(registry);
+registerWsDocs(registry);
 
 const app = express();
 app.use(helmet());

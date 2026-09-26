@@ -33,7 +33,7 @@ describe('requireJsonContentType', () => {
   });
 
   it('does not affect a bodyless POST', async () => {
-    const res = await request(app).post('/api/system/record');
+    const res = await request(app).post('/api/metrics/record');
     expect(res.status).not.toBe(415);
   });
 });
