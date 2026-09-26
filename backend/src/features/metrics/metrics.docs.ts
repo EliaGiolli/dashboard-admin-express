@@ -1,5 +1,6 @@
 import {
   appConfigSchema,
+  historyQuerySchema,
   configKeyParamsSchema,
   systemSampleSchema,
   updateConfigSchema,
@@ -10,7 +11,7 @@ import { errorResponses, json, type ApiRegistry } from '../../core/openapi/index
 export function registerMetricsDocs(registry: ApiRegistry) {
   registry.registerPath({
     method: 'get',
-    path: '/api/system',
+    path: '/api/metrics',
     tags: ['System'],
     summary: 'Latest stored system samples',
     responses: {
@@ -19,8 +20,22 @@ export function registerMetricsDocs(registry: ApiRegistry) {
     },
   });
   registry.registerPath({
+    method: 'get',
+    path: '/api/metrics/history',
+    tags: ['System'],
+    summary: 'Stored samples from the last N minutes, oldest first',
+    description:
+      'Used to prefill the charts before live WebSocket snapshots arrive. One sample is stored about every 2 seconds; `minutes` is capped to keep the response small.',
+    request: { query: historyQuerySchema },
+    responses: {
+      200: { description: 'Samples, oldest first', content: json(z.array(systemSampleSchema)) },
+      400: errorResponses[400],
+      500: errorResponses[500],
+    },
+  });
+  registry.registerPath({
     method: 'post',
-    path: '/api/system/record',
+    path: '/api/metrics/record',
     tags: ['System'],
     summary: 'Take and store a system sample now',
     description:
@@ -32,7 +47,7 @@ export function registerMetricsDocs(registry: ApiRegistry) {
   });
   registry.registerPath({
     method: 'patch',
-    path: '/api/system/settings',
+    path: '/api/metrics/settings',
     tags: ['System'],
     summary: 'Update a monitoring threshold',
     request: {

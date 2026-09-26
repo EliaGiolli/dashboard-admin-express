@@ -1,6 +1,8 @@
+import type { HistoryQuery } from '@pc-monitor/shared';
 import { type Request, type Response, type NextFunction } from 'express';
 import { getSystemHistory, saveCurrentSystemStats } from './metrics.service.js';
 import { prisma } from '../../core/prisma.js';
+import { getSamplesSince } from './samples.service.js';
 import { AppError } from '../../core/errors/appError.js';
 
 export const getSystemStats = async (req: Request, res: Response, next:NextFunction) => {
@@ -36,3 +38,14 @@ export const recordCurrentStats = async (req: Request, res: Response, next: Next
          next(new AppError('Unable to save the data', 500));
     }
 };
+
+// Samples from the last `minutes`, oldest first: the frontend prefills its charts with
+// this, then appends live `snapshot` events from the WebSocket.
+export async function getHistoryController(req: Request, res: Response, next: NextFunction) {
+    const { minutes } = req.query as unknown as HistoryQuery;
+    try {
+        res.status(200).json(await getSamplesSince(minutes));
+    } catch {
+        next(new AppError('Unable to read the metrics history', 500));
+    }
+}

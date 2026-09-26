@@ -1,9 +1,10 @@
-import { configKeyParamsSchema, updateConfigSchema } from "@pc-monitor/shared";
+import { configKeyParamsSchema, historyQuerySchema, updateConfigSchema } from "@pc-monitor/shared";
 import { Router } from "express";
 import { z } from "zod";
 import { validate } from "../../core/validation/validate.js";
 import { 
     getSystemStats, 
+    getHistoryController,
     recordCurrentStats, 
     patchSystemSettings 
 } from "./metrics.controller.js";
@@ -11,6 +12,7 @@ import {
 const systemRouter = Router();
 
 systemRouter.get('/', getSystemStats);
+systemRouter.get('/history', validate({ query: historyQuerySchema }), getHistoryController);
 systemRouter.post('/record', recordCurrentStats);
 systemRouter.patch(
     '/settings',
