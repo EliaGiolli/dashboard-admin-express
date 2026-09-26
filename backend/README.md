@@ -79,6 +79,27 @@ REST: `GET /api/metrics/history?minutes=1..360` (chart prefill, oldest first), `
 
 `features/processes` serves `GET /api/processes?sortBy=cpu|mem&limit=` (top N, System Idle Process excluded).
 
+## Fix actions
+
+`features/actions/registry.ts` is the only list of things the server can execute: id -> script file in `scripts/`, label, risk, `requiresConfirm`, and how the (validated) request becomes argv. `actions.service.ts` runs one end to end: registry lookup (404), argument checks (400, or 403 for a protected PID), confirmation (409 without `{"confirm": true}` for `empty-recyclebin` and `kill-process`), one run at a time per action, then `runner.ts`, then an audit `Log` (`source: "action"`, `actionId`, `success`, `durationMs`).
+
+`runner.ts` spawns `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File <script> ...args` with an argv array (no shell), a 60s timeout that kills the process tree, capped output, and never throws. Scripts print a one-line summary and exit non-zero on failure.
+
+| Action | Script behavior | Confirm |
+| --- | --- | --- |
+| `flush-dns` | `Clear-DnsClientCache` | no |
+| `clear-temp` | deletes items older than 24h in `%TEMP%`; skips locked files, never follows junctions/symlinks; reports MB freed | no |
+| `empty-recyclebin` | `Clear-RecycleBin` on all drives | yes |
+| `kill-process` | `Stop-Process -Force` on `-ProcessId`; refuses critical Windows processes | yes |
+
+Routes: `GET /api/actions` (metadata only), `POST /api/actions/:id/run`, `POST /api/processes/:pid/kill`. Past runs: `GET /api/logs?source=action`. `npm run build` copies `scripts/` into `dist/`.
+
+Tests run the real scripts only where it is harmless: flush-dns for real, clear-temp on sandbox folders, kill-process on a throwaway process the test starts, empty-recyclebin only with a test-only `-DryRun`.
+
+## Logs
+
+`GET /api/logs` filters by `level`, `source` (`manual`/`monitor`/`action`), `actionId`, `archived`, `from`/`to`, and pages with `limit` (1-100, default 50) and an opaque keyset `cursor` (`nextCursor` of the previous page), so pages don't shift when new logs arrive. Response: `{ items, nextCursor }`.
+
 ## Database
 
 Three tables (`prisma/schema.prisma`): `Sample` (one metrics sample: CPU %, nullable CPU temperature, RAM used/total, disk read/write and network rx/tx in bytes per second), `Log` (manual entries, threshold alerts and fix-action runs, told apart by `source`; action runs also store `actionId`, `success`, `durationMs` as the audit trail) and `AppConfig` (key/value settings).
@@ -91,4 +112,4 @@ On startup the server seeds the `CPU_THRESHOLD`, `RAM_THRESHOLD` and `DISK_THRES
 
 - **CORS + Origin check** (`core/security/cors.ts`, `originGuard.ts`): both consult `ALLOWED_ORIGINS` (`core/config/env.ts`) — the frontend's origin (`FRONTEND_ORIGIN` env, default `http://localhost:5173`) plus the server's own origin, so Swagger UI's "Try it out" (same-origin) still works. CORS controls whether a browser can *read* a cross-origin response; `originGuard` is an independent server-side check that rejects a mismatched `Origin` on `POST`/`PUT`/`PATCH`/`DELETE` with 403, regardless of what the browser would have allowed.
 - **`requireJsonContentType`**: any request carrying a body must be `application/json` (415 otherwise). Together with the Origin check this closes the CORS "simple request" gap — a plain HTML form can only submit `application/x-www-form-urlencoded`/`multipart/form-data`/`text/plain` and skip preflight, so requiring JSON forces even same-site form-based attempts through a real preflight.
-- **`adminGuard`** (`core/security/authGuard.ts`): compares the `x-api-key` header against `API_SEGRETO` with `crypto.timingSafeEqual`. Not wired to any route yet — a key shipped to a browser isn't a real secret, so this is defense in depth only; the binding to `127.0.0.1` plus the two checks above are the actual protection.
+- **`adminGuard`** (`core/security/authGuard.ts`): compares the `x-api-key` header against `API_SEGRETO` with `crypto.timingSafeEqual`. Guards `PATCH` and `DELETE /api/logs/:id` (403 otherwise; use **Authorize** in Swagger UI). A key shipped to a browser isn't a real secret, so this is defense in depth only; the binding to `127.0.0.1` plus the two checks above are the actual protection.

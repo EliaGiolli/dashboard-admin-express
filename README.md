@@ -11,8 +11,8 @@ Live PC performance charts and one-click fix scripts, all running locally on you
 ## What it does
 
 - **Monitor**: CPU (total, per core, temperature), RAM, disk usage and I/O, network throughput and a top-processes list (`GET /api/processes`); pushed live over Socket.IO (`/ws`) every 2 seconds and stored in SQLite, so the charts can be prefilled from `GET /api/metrics/history` and history survives restarts.
-- **Fix** *(planned)*: buttons that run PowerShell scripts: kill a process, clear temp files, flush the DNS cache, empty the Recycle Bin. Risky actions need confirmation, enforced by the server.
-- **Log** *(planned)*: every action run and every threshold alert (for example CPU above its limit) is written to a searchable log.
+- **Fix**: PowerShell scripts run from the API: flush the DNS cache, clear temp files older than 24h, empty the Recycle Bin, kill a process. Emptying the Recycle Bin and killing a process need `{"confirm": true}`, enforced by the server (409 otherwise). *(planned)* dashboard buttons with a confirm dialog.
+- **Log**: every action run (with success and duration) and every threshold alert is written to the log, which can be filtered (level, source, action, archived, date range) and paged; archiving and deleting entries needs the admin key.
 - **Document**: every mounted endpoint is described in Swagger UI (`/api/docs`, spec at `/api/openapi.json`), generated from the same zod schemas used to validate requests; a test fails the build if a route is added without docs.
 
 ## Warning
@@ -52,7 +52,9 @@ There is no login, so the main threat is another website in your browser calling
 - requests that carry a body must be `Content-Type: application/json`, and a server-side `Origin` check independent of CORS rejects mismatched mutating requests with 403 — both close the "simple request" gap a plain HTML form could otherwise use
 - `helmet` headers, Prisma-only database access, constant-time comparison for the (defense-in-depth) admin guard
 - `Origin` check on the Socket.IO handshake too (CORS doesn't cover WebSockets), WebSocket transport only (no long-polling endpoints)
-- *(planned)* scripts started with `spawn` and an argument array (never a shell string), action ids only ever used as registry keys, server-side `confirm: true` for risky actions, and refusal to kill system processes
+- Scripts started with `spawn` and an argument array in PowerShell `-File` mode (never a shell string), with a timeout that kills the whole process tree; action ids are only registry keys, never part of a path
+- Server-side `confirm: true` for destructive actions; PIDs 0 and 4, the server itself and its parent are refused, and the kill script also refuses critical Windows processes (csrss, lsass, ...)
+- `clear-temp` only deletes items older than 24h in your user temp folder and never follows junctions or symlinks
 
 Cloning this repo and running it only ever affects the machine it runs on.
 
