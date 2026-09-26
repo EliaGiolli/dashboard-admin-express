@@ -16,6 +16,7 @@ export const errorResponses = {
   400: { description: 'Invalid request', content: { 'application/json': { schema: errorResponseSchema } } },
   403: { description: 'Origin not allowed', content: { 'application/json': { schema: errorResponseSchema } } },
   404: { description: 'Not found', content: { 'application/json': { schema: errorResponseSchema } } },
+  409: { description: 'Conflict', content: { 'application/json': { schema: errorResponseSchema } } },
   500: { description: 'Server error', content: { 'application/json': { schema: errorResponseSchema } } },
 } as const;
 
