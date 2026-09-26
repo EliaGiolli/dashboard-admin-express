@@ -4,11 +4,12 @@
   "version": "1.0.0",
   "workspaces": [
     "shared",
-    "backend"
+    "backend",
+    "frontend"
   ],
   "scripts": {
     "prepare": "npm run build -w shared",
-    "dev": "npm run build -w shared && npm run dev --workspaces --if-present",
+    "dev": "npm run build -w shared && concurrently -k -n shared,backend,frontend -c blue,green,magenta \"npm run dev -w shared\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run build -w shared && npm run build --workspaces --if-present",
     "test": "npm run build -w shared && npm test --workspaces --if-present",
     "typecheck": "npm run build -w shared && npm run typecheck --workspaces --if-present",
@@ -16,7 +17,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.5",
     "eslint": "^10.11.0",
+    "eslint-plugin-jsx-a11y-x": "^0.2.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.12.0",
     "typescript-eslint": "^8.70.1"
   },

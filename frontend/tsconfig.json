@@ -1,0 +1,10 @@
+{
+  // Solution-style root: editors, typescript-eslint and the shadcn CLI read it.
+  // `@/` must be declared here too, since shadcn resolves aliases from this file.
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] }
+  }
+}

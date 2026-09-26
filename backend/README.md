@@ -43,7 +43,7 @@ Trade-off: a very small app doesn't need this much structure, and MVC is simpler
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | start with `tsx watch` |
+| `npm run dev` | start with `node --watch` (tsx loader), restarting on changes |
 | `npm test` | Vitest + Supertest |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run live` | print the live `/ws` stream of a running server (`-- 15` stops after 15s) |

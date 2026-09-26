@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+
+/* Theme is driven by data-theme on <html> (dark by default, set up in F-04),
+   so shadcn's `dark:` utilities follow the attribute instead of the OS setting. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));

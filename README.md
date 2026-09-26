@@ -71,9 +71,9 @@ npm install
 Copy `backend/.env.example` to `backend/.env` and set the values, then from `backend/` run `npx prisma generate` and `npx prisma migrate deploy` (creates the SQLite database). Default alert thresholds are seeded when the server starts; samples and logs older than `RETENTION_DAYS` (default 7) are pruned at startup.
 
 ```bash
-npm run dev                  # from the repo root: starts the backend
-npm test                     # builds shared, then runs the shared and backend tests
-npm run lint                 # ESLint (typescript-eslint) on backend/ and shared/
+npm run dev                  # from the repo root: shared (watch), backend and frontend on http://localhost:5173
+npm test                     # builds shared, then runs every workspace's tests
+npm run lint                 # ESLint (typescript-eslint, React hooks, jsx-a11y) on every workspace
 npm run typecheck            # tsc --noEmit in every workspace
 npm run live -w backend      # prints the live Socket.IO stream of a running backend
 ``` See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for package details.
