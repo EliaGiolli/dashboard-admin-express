@@ -18,7 +18,7 @@ export function registerActionsDocs(registry: ApiRegistry) {
     tags: ['Actions'],
     summary: 'Run a fix action',
     description:
-      'Runs the PowerShell script registered for this id and writes the outcome to the logs (source `action`). Responds 200 with `success: false` when the script itself failed. `pid` is only accepted (and required) by `kill-process`.',
+      'Runs the PowerShell script registered for this id and writes the outcome to the logs (source `action`; list past runs with `GET /api/logs?source=action`). Responds 200 with `success: false` when the script itself failed. `pid` is only accepted (and required) by `kill-process`. Actions with `requiresConfirm` need `{"confirm": true}` (409 otherwise).',
     request: {
       params: actionIdParamsSchema,
       body: { required: false, content: json(runActionRequestSchema) },
