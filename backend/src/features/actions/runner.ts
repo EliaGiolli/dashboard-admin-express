@@ -91,6 +91,10 @@ export function runScript(scriptPath: string, args: string[], options: RunScript
     let settled = false;
     let timedOut = false;
     // Declared before finish(): spawn can throw synchronously, before the timer exists.
+    // Must stay `let`: a `const` declared at the assignment below would be in its
+    // temporal dead zone when finish() runs from the spawn failure path (a real bug the
+    // runner tests caught).
+    // eslint-disable-next-line prefer-const
     let timer: ReturnType<typeof setTimeout> | undefined;
     const finish = (success: boolean, message: string) => {
       if (settled) return;
