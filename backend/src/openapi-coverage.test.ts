@@ -62,6 +62,17 @@ describe('OpenAPI coverage', () => {
     expect(stale).toEqual([]);
   });
 
+  it('marks exactly the admin-guarded routes with the adminKey scheme', () => {
+    const document = buildOpenApiDocument(registry);
+    expect(document.components?.securitySchemes?.adminKey).toMatchObject({ type: 'apiKey', in: 'header', name: 'x-api-key' });
+    const secured = Object.entries(document.paths ?? {}).flatMap(([p, item]) =>
+      Object.entries(item ?? {})
+        .filter(([, op]) => (op as { security?: unknown[] }).security?.length)
+        .map(([method]) => `${method.toUpperCase()} ${p}`),
+    );
+    expect(secured.sort()).toEqual(['DELETE /api/logs/{id}', 'PATCH /api/logs/{id}']);
+  });
+
   it('documents the Socket.IO channel and its event payloads', () => {
     const document = buildOpenApiDocument(registry);
     const ws = document.paths?.['/ws']?.get;

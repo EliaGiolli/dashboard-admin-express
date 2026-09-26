@@ -1,21 +1,26 @@
 import {
   createLogSchema,
   logIdParamsSchema,
+  logPageSchema,
+  logQuerySchema,
   logSchema,
   messageResponseSchema,
   updateLogSchema,
 } from '@pc-monitor/shared';
-import { z } from 'zod';
-import { errorResponses, json, type ApiRegistry } from '../../core/openapi/index.js';
+import { adminSecurity, errorResponses, json, type ApiRegistry } from '../../core/openapi/index.js';
 
 export function registerLogsDocs(registry: ApiRegistry) {
   registry.registerPath({
     method: 'get',
     path: '/api/logs',
     tags: ['Logs'],
-    summary: 'List all logs, newest first',
+    summary: 'List logs, newest first, with filters and pagination',
+    description:
+      'Filters combine with AND. `source=action` lists fix-action runs (the audit trail), `source=monitor` threshold alerts. `from`/`to` are inclusive ISO 8601 timestamps. Pages hold `limit` items (max 100); pass `nextCursor` as `cursor` to get the next page, until it is null.',
+    request: { query: logQuerySchema },
     responses: {
-      200: { description: 'Logs', content: json(z.array(logSchema)) },
+      200: { description: 'One page of logs', content: json(logPageSchema) },
+      400: errorResponses[400],
       500: errorResponses[500],
     },
   });
@@ -38,11 +43,13 @@ export function registerLogsDocs(registry: ApiRegistry) {
     method: 'patch',
     path: '/api/logs/{id}',
     tags: ['Logs'],
-    summary: 'Archive or unarchive a log',
+    summary: 'Archive or unarchive a log (admin key)',
+    security: adminSecurity,
     request: { params: logIdParamsSchema, body: { required: true, content: json(updateLogSchema) } },
     responses: {
       200: { description: 'Updated log', content: json(logSchema) },
       400: errorResponses[400],
+      403: { ...errorResponses[403], description: 'Missing or wrong x-api-key, or foreign origin' },
       404: errorResponses[404],
       500: errorResponses[500],
     },
@@ -51,11 +58,13 @@ export function registerLogsDocs(registry: ApiRegistry) {
     method: 'delete',
     path: '/api/logs/{id}',
     tags: ['Logs'],
-    summary: 'Delete a log permanently',
+    summary: 'Delete a log permanently (admin key)',
+    security: adminSecurity,
     request: { params: logIdParamsSchema },
     responses: {
       200: { description: 'Log deleted', content: json(messageResponseSchema) },
       400: errorResponses[400],
+      403: { ...errorResponses[403], description: 'Missing or wrong x-api-key, or foreign origin' },
       404: errorResponses[404],
       500: errorResponses[500],
     },

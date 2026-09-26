@@ -12,10 +12,21 @@ export const registry = new OpenAPIRegistry();
 
 export type ApiRegistry = OpenAPIRegistry;
 
+// The x-api-key admin guard (core/security/authGuard.ts). Registering it makes Swagger
+// UI's "Authorize" button send the header on the routes that declare `adminSecurity`.
+registry.registerComponent('securitySchemes', 'adminKey', {
+  type: 'apiKey',
+  in: 'header',
+  name: 'x-api-key',
+  description: 'Value of API_SEGRETO from backend/.env. Defense in depth only: the real protection is 127.0.0.1 + Origin checks.',
+});
+export const adminSecurity = [{ adminKey: [] }];
+
 export const errorResponses = {
   400: { description: 'Invalid request', content: { 'application/json': { schema: errorResponseSchema } } },
   403: { description: 'Origin not allowed', content: { 'application/json': { schema: errorResponseSchema } } },
   404: { description: 'Not found', content: { 'application/json': { schema: errorResponseSchema } } },
+  409: { description: 'Conflict', content: { 'application/json': { schema: errorResponseSchema } } },
   500: { description: 'Server error', content: { 'application/json': { schema: errorResponseSchema } } },
 } as const;
 
