@@ -1,4 +1,5 @@
 import type { Router } from 'express';
+import { actionsRouter } from './features/actions/index.js';
 import { configRouter } from './features/config/index.js';
 import { healthRouter } from './features/health/index.js';
 import { logsRouter } from './features/logs/index.js';
@@ -19,4 +20,5 @@ export const routeMounts: RouteMount[] = [
   { prefix: '/metrics', router: metricsRouter },
   { prefix: '/logs', router: logsRouter },
   { prefix: '/processes', router: processesRouter },
+  { prefix: '/actions', router: actionsRouter },
 ];

@@ -6,6 +6,7 @@ import {
   type NextFunction,
 } from 'express';
 
+import { registerActionsDocs } from './features/actions/index.js';
 import { registerConfigDocs } from './features/config/index.js';
 import { registerLogsDocs } from './features/logs/index.js';
 import { registerMetricsDocs } from './features/metrics/index.js';
@@ -25,6 +26,7 @@ registerConfigDocs(registry);
 registerMetricsDocs(registry);
 registerLogsDocs(registry);
 registerProcessesDocs(registry);
+registerActionsDocs(registry);
 registerWsDocs(registry);
 
 const app = express();
