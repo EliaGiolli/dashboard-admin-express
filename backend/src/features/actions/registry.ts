@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { ActionDefinition, ActionId, RunActionRequest } from '@pc-monitor/shared';
 import { AppError } from '../../core/errors/appError.js';
 
@@ -13,6 +15,14 @@ import { AppError } from '../../core/errors/appError.js';
  *   only typed values (an integer PID) are ever forwarded.
  * - `requiresConfirm` is enforced by the server (409), not just by the UI dialog.
  */
+
+// Next to this file in src/ (tsx) and in dist/ (the build copies the folder).
+export const SCRIPTS_DIR = fileURLToPath(new URL('./scripts/', import.meta.url));
+
+// Absolute path of an action's script. Built only from the registry entry.
+export function scriptPath(entry: ActionEntry): string {
+  return path.join(SCRIPTS_DIR, entry.script);
+}
 
 export type ActionEntry = ActionDefinition & {
   script: string;
