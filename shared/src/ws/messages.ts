@@ -1,16 +1,19 @@
 import { z } from 'zod';
-import { snapshotSchema } from '../metrics/schema.js';
+import { snapshotSchema, type Snapshot } from '../metrics/schema.js';
 
 /**
- * Messages the server pushes over the `/ws` WebSocket.
+ * Messages the server pushes over the live channel (Socket.IO on path `/ws`).
  *
- * The union is discriminated on `type`, so a client can switch on it and TypeScript
- * narrows `data` automatically. The channel is one-way (server -> client): the server
- * ignores anything a client sends.
+ * Each message type is a Socket.IO event: the event name is the `type` below and the
+ * event payload is `data`. `serverEventSchemas` maps every event to the zod schema of
+ * its payload, so the client validates what it receives instead of trusting it.
+ * `ServerToClientEvents` gives Socket.IO's generics the same contract at compile time.
  *
- * Versioning rule: add new message types instead of changing existing ones, and make
- * clients ignore unknown types (`parseServerMessage` returns null for them), so an
- * older frontend keeps working against a newer backend.
+ * The channel is one-way (server -> client): the server registers no client events.
+ *
+ * Versioning rule: add new event types instead of changing existing ones, and make
+ * clients ignore unknown events, so an older frontend keeps working against a newer
+ * backend.
  */
 
 // Metrics that can cross an AppConfig threshold. Disk uses the fullest drive.
@@ -42,6 +45,23 @@ export const alertMessageSchema = z.object({
 export const serverMessageSchema = z.discriminatedUnion('type', [snapshotMessageSchema, alertMessageSchema]);
 export type ServerMessage = z.infer<typeof serverMessageSchema>;
 export type ServerMessageType = ServerMessage['type'];
+
+// Event name -> payload schema, for runtime validation on the client:
+//   socket.on('snapshot', (raw) => { const r = serverEventSchemas.snapshot.safeParse(raw); ... })
+export const serverEventSchemas = {
+  snapshot: snapshotSchema,
+  alert: alertSchema,
+} as const satisfies Record<ServerMessageType, z.ZodType>;
+
+// Socket.IO typing: `new Server<ClientToServerEvents, ServerToClientEvents>()` on the
+// backend and `io() as Socket<ServerToClientEvents, ClientToServerEvents>` on the frontend.
+export interface ServerToClientEvents {
+  snapshot: (data: Snapshot) => void;
+  alert: (data: Alert) => void;
+}
+
+// Intentionally empty: clients never send events (read-only channel).
+export interface ClientToServerEvents {}
 
 /**
  * Parses a raw WebSocket frame into a typed message.

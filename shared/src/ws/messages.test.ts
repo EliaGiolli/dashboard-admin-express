@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Snapshot } from '../metrics/schema.js';
-import { parseServerMessage, serverMessageSchema, type ServerMessage } from './messages.js';
+import {
+  parseServerMessage,
+  serverEventSchemas,
+  serverMessageSchema,
+  type ServerMessage,
+} from './messages.js';
 
 const snapshot: Snapshot = {
   timestamp: '2026-09-26T10:00:00.000Z',
@@ -51,5 +56,18 @@ describe('parseServerMessage', () => {
     expect(parseServerMessage('null')).toBeNull();
     expect(parseServerMessage(JSON.stringify({ type: 'hello', data: {} }))).toBeNull(); // unknown type
     expect(parseServerMessage(JSON.stringify({ type: 'snapshot' }))).toBeNull(); // missing data
+  });
+});
+
+describe('serverEventSchemas', () => {
+  it('has exactly one event schema per message type, so the two lists cannot drift', () => {
+    const unionTypes = serverMessageSchema.options.map((o) => o.shape.type.value).sort();
+    expect(Object.keys(serverEventSchemas).sort()).toEqual(unionTypes);
+  });
+
+  it('validates the same payloads as the message union', () => {
+    expect(serverEventSchemas.snapshot.parse(snapshot)).toEqual(snapshot);
+    if (alert.type === 'alert') expect(serverEventSchemas.alert.parse(alert.data)).toEqual(alert.data);
+    expect(serverEventSchemas.alert.safeParse(snapshot).success).toBe(false);
   });
 });
