@@ -36,7 +36,7 @@ export function registerProcessesDocs(registry: ApiRegistry) {
       200: { description: 'The kill ran (check `success`)', content: json(runActionResultSchema) },
       400: errorResponses[400],
       403: { ...errorResponses[403], description: 'Foreign origin, or a protected PID' },
-      409: { ...errorResponses[409], description: 'Already stopping this PID' },
+      409: { ...errorResponses[409], description: 'Confirmation missing (`{"confirm": true}` is required), or already stopping this PID' },
       500: errorResponses[500],
     },
   });

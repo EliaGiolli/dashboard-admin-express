@@ -162,3 +162,51 @@ describe('kill-process end to end (both routes, runner mocked)', () => {
     expect(res.body.message).toBe('kill-process needs a pid');
   });
 });
+
+describe('confirmation guard (server-side)', () => {
+  it.each([
+    ['no body', undefined],
+    ['empty body', {}],
+    ['confirm false', { confirm: false }],
+  ])('empty-recyclebin with %s is refused with 409 and runs nothing', async (_label, body) => {
+    const req = post('/api/actions/empty-recyclebin/run');
+    const res = body === undefined ? await req : await req.send(body);
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe('Empty Recycle Bin needs confirmation: send {"confirm": true}');
+    expect(run).not.toHaveBeenCalled();
+    expect(await prisma.log.count()).toBe(0);
+  });
+
+  it('empty-recyclebin runs with confirm: true (runner mocked, nothing is deleted)', async () => {
+    const res = await post('/api/actions/empty-recyclebin/run').send({ confirm: true });
+    expect(res.status).toBe(200);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('killing a process needs confirmation on both routes', async () => {
+    expect((await post('/api/processes/1234/kill')).status).toBe(409);
+    expect((await post('/api/processes/1234/kill').send({ confirm: false })).status).toBe(409);
+    expect((await post('/api/actions/kill-process/run').send({ pid: 1234 })).status).toBe(409);
+    expect(run).not.toHaveBeenCalled();
+    expect((await post('/api/processes/1234/kill').send({ confirm: true })).status).toBe(200);
+  });
+
+  it('a protected PID is refused (403) before asking for confirmation', async () => {
+    expect((await post('/api/processes/4/kill')).status).toBe(403);
+  });
+
+  it('actions without requiresConfirm run immediately, with or without confirm', async () => {
+    expect((await post('/api/actions/flush-dns/run')).status).toBe(200);
+    expect((await post('/api/actions/clear-temp/run').send({ confirm: true })).status).toBe(200);
+  });
+
+  it('the guard matches the metadata the UI reads', async () => {
+    const res = await request(app).get('/api/actions');
+    const needsConfirm = res.body.filter((a: { requiresConfirm: boolean }) => a.requiresConfirm);
+    for (const action of needsConfirm) {
+      const url = action.id === 'kill-process' ? '/api/processes/1234/kill' : `/api/actions/${action.id}/run`;
+      expect((await post(url).send({})).status).toBe(409);
+    }
+    expect(run).not.toHaveBeenCalled();
+  });
+});

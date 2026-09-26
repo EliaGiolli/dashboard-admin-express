@@ -28,7 +28,10 @@ export function registerActionsDocs(registry: ApiRegistry) {
       400: errorResponses[400],
       403: errorResponses[403],
       404: errorResponses[404],
-      409: { ...errorResponses[409], description: 'The same action is already running' },
+      409: {
+        ...errorResponses[409],
+        description: 'Confirmation missing (send `{"confirm": true}` for actions with `requiresConfirm`), or the same action is already running',
+      },
       500: errorResponses[500],
     },
   });

@@ -10,7 +10,11 @@ import { runScript, type RunOutcome } from './runner.js';
  *
  * Order matters:
  * 1. Registry lookup: an unknown id is a 404 and nothing else happens.
- * 2. Confirmation (B-53) and argument checks: rejected requests never reach PowerShell.
+ * 2. Argument checks (400 missing/unexpected pid, 403 protected pid), then the
+ *    confirmation guard (409): destructive actions need {"confirm": true} in the request
+ *    itself. The UI dialog is not enough, since any client can call the API directly.
+ *    Arguments come first so the user is never asked to confirm something that would be
+ *    refused anyway. Rejected requests never reach PowerShell.
  * 3. One run at a time per action (and per PID for kill-process): a double click gets a
  *    409 instead of starting the same script twice.
  * 4. The script runs through runner.ts (argv spawn, timeout, never throws).
@@ -32,7 +36,11 @@ export function createActionService({
     const entry = findAction(id);
     if (!entry) throw new AppError(`Unknown action: ${id}`, 404);
 
-    const args = entry.buildArgs(request); // 400 on a missing or unexpected pid
+    const args = entry.buildArgs(request); // 400 missing/unexpected pid, 403 protected pid
+
+    if (entry.requiresConfirm && request.confirm !== true) {
+      throw new AppError(`${entry.label} needs confirmation: send {"confirm": true}`, 409);
+    }
 
     const lockKey = request.pid === undefined ? entry.id : `${entry.id}:${request.pid}`;
     if (inProgress.has(lockKey)) throw new AppError(`${entry.label} is already running`, 409);
