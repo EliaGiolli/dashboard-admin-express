@@ -60,8 +60,8 @@ export interface ServerToClientEvents {
   alert: (data: Alert) => void;
 }
 
-// Intentionally empty: clients never send events (read-only channel).
-export interface ClientToServerEvents {}
+// No events: clients never send anything (read-only channel).
+export type ClientToServerEvents = Record<string, never>;
 
 /**
  * Parses a raw WebSocket frame into a typed message.

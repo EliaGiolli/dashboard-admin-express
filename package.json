@@ -11,6 +11,14 @@
     "dev": "npm run build -w shared && npm run dev --workspaces --if-present",
     "build": "npm run build -w shared && npm run build --workspaces --if-present",
     "test": "npm run build -w shared && npm test --workspaces --if-present",
-    "typecheck": "npm run build -w shared && npm run typecheck --workspaces --if-present"
-  }
+    "typecheck": "npm run build -w shared && npm run typecheck --workspaces --if-present",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "typescript-eslint": "^8.70.1"
+  },
+  "type": "module"
 }

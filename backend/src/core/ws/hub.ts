@@ -78,8 +78,10 @@ export function createWsHub(httpServer: HttpServer): WsHub {
       // io.close() disconnects every client and then closes the HTTP server the hub is
       // attached to, so shutdown needs only this call. Resolves even if the HTTP server
       // was already closed (its callback then gets an error we don't care about).
+      // io.close() also returns a promise; its rejection (server already closed) is
+      // handled here so it can't surface as an unhandled rejection during shutdown.
       return new Promise<void>((resolve) => {
-        io.close(() => resolve());
+        io.close(() => resolve()).catch(() => resolve());
       });
     },
   };

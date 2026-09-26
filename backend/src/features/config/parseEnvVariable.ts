@@ -4,9 +4,10 @@ export function parseEnvVariable(value: string | undefined, type: 'string' | 'nu
     if(value === undefined) return undefined;
 
   switch(type) {
-    case 'number':
+    case 'number': {
       const n = Number(value);
       return isNaN(n) ? undefined : n;
+    }
     case 'boolean':
       return value === 'true';
     default:

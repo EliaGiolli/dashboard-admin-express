@@ -210,3 +210,17 @@ describe('confirmation guard (server-side)', () => {
     expect(run).not.toHaveBeenCalled();
   });
 });
+
+describe('per-action timeouts', () => {
+  it('gives clear-temp and empty-recyclebin longer than the 60s default', async () => {
+    await post('/api/actions/clear-temp/run').send({});
+    await post('/api/actions/empty-recyclebin/run').send({ confirm: true });
+    await post('/api/actions/flush-dns/run').send({});
+    const timeouts = Object.fromEntries(run.mock.calls.map(([file, , options]) => [path.basename(file), options?.timeoutMs]));
+    expect(timeouts).toEqual({
+      'clear-temp.ps1': 600_000,
+      'empty-recyclebin.ps1': 120_000,
+      'flush-dns.ps1': undefined, // runner default (60s)
+    });
+  });
+});

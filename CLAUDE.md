@@ -10,7 +10,7 @@ A "phase" is a section of `TASKS.md` (S, B1..B10, F1..F5). Commits are per task;
 1. Pick the first unchecked task. Backend tasks (`B-*`) come first; do not start any `F-*` task until `B-63` is done and the user has given the go-ahead.
 2. At the start of a phase, create a branch off up-to-date `main`: `git switch -c <phase>-<short-slug>` (e.g. `b4-database`). Stay on it for every task in that phase.
 3. Implement only the current task. Keep the change small.
-4. Test: `npm test` and `npx tsc --noEmit` (add tests with the task; HTTP tests use Supertest). Once B3 exists, every new or changed route must be documented in Swagger in the same task (a test fails if a mounted route is missing from the spec), and each phase ends with a check in Swagger UI (`/api/docs`): tell the user which endpoints to try.
+4. Test: `npm test`, `npx tsc --noEmit` and `npm run lint` (add tests with the task; HTTP tests use Supertest). Once B3 exists, every new or changed route must be documented in Swagger in the same task (a test fails if a mounted route is missing from the spec), and each phase ends with a check in Swagger UI (`/api/docs`): tell the user which endpoints to try.
 5. Tick the task in `TASKS.md` (not committed, since it's gitignored).
 6. Commit with a message starting with the task id, e.g. `B-21: add sample service`. Never use `--no-verify`.
 7. Push the phase branch after each task or at least at phase end (`git push -u origin <branch>`).
@@ -25,7 +25,8 @@ Backend gate: the backend is "done" only when tests pass, it runs locally with l
 - `npm install` at the root installs all workspaces
 - `npm run dev` runs backend and frontend together; Vite proxies `/api` and `/ws` to the backend (`127.0.0.1:4317`)
 - `npm test` (Vitest); single test: `npx vitest run <file> -t "<name>"` from `backend/`, `frontend/` or `shared/`
-- `npx tsc --noEmit` for type checks
+- `npx tsc --noEmit` (or `npm run typecheck` at the root) for type checks; `npm run lint` at the root (ESLint flat config in `eslint.config.js`, type-aware `no-floating-promises` on sources)
+- `npm run live -w backend` prints the live Socket.IO stream of a running backend
 - Prisma (from `backend/`): `npx prisma generate`, `npx prisma migrate dev`; the generated client (`src/generated/prisma`) and `*.db` are gitignored
 - Swagger UI at `http://127.0.0.1:4317/api/docs`, raw spec at `/api/openapi.json`
 

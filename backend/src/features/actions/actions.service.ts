@@ -23,11 +23,11 @@ import { runScript, type RunOutcome } from './runner.js';
  *    are not logged.
  */
 
-type RunFn = (scriptPath: string, args: string[]) => Promise<RunOutcome>;
+type RunFn = (scriptPath: string, args: string[], timeoutMs?: number) => Promise<RunOutcome>;
 type WriteLogFn = (log: CreateLog, audit: LogAudit) => Promise<{ id: number }>;
 
 export function createActionService({
-  run = (file, args) => runScript(file, args),
+  run = (file, args, timeoutMs) => runScript(file, args, timeoutMs === undefined ? {} : { timeoutMs }),
   writeLog = (log, audit) => new LoggerService().writeLogs(log, audit),
 }: { run?: RunFn; writeLog?: WriteLogFn } = {}) {
   const inProgress = new Set<string>();
@@ -48,7 +48,7 @@ export function createActionService({
 
     let outcome: RunOutcome;
     try {
-      outcome = await run(scriptPath(entry), args);
+      outcome = await run(scriptPath(entry), args, entry.timeoutMs);
     } finally {
       inProgress.delete(lockKey);
     }

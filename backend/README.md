@@ -46,6 +46,7 @@ Trade-off: a very small app doesn't need this much structure, and MVC is simpler
 | `npm run dev` | start with `tsx watch` |
 | `npm test` | Vitest + Supertest |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run live` | print the live `/ws` stream of a running server (`-- 15` stops after 15s) |
 | `npm run build` / `npm start` | compile to `dist/` and run it |
 | `npx prisma generate` | generate the Prisma client |
 | `npx prisma migrate deploy` | create/update the database from the migrations |
