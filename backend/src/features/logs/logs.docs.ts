@@ -7,7 +7,7 @@ import {
   messageResponseSchema,
   updateLogSchema,
 } from '@pc-monitor/shared';
-import { errorResponses, json, type ApiRegistry } from '../../core/openapi/index.js';
+import { adminSecurity, errorResponses, json, type ApiRegistry } from '../../core/openapi/index.js';
 
 export function registerLogsDocs(registry: ApiRegistry) {
   registry.registerPath({
@@ -43,11 +43,13 @@ export function registerLogsDocs(registry: ApiRegistry) {
     method: 'patch',
     path: '/api/logs/{id}',
     tags: ['Logs'],
-    summary: 'Archive or unarchive a log',
+    summary: 'Archive or unarchive a log (admin key)',
+    security: adminSecurity,
     request: { params: logIdParamsSchema, body: { required: true, content: json(updateLogSchema) } },
     responses: {
       200: { description: 'Updated log', content: json(logSchema) },
       400: errorResponses[400],
+      403: { ...errorResponses[403], description: 'Missing or wrong x-api-key, or foreign origin' },
       404: errorResponses[404],
       500: errorResponses[500],
     },
@@ -56,11 +58,13 @@ export function registerLogsDocs(registry: ApiRegistry) {
     method: 'delete',
     path: '/api/logs/{id}',
     tags: ['Logs'],
-    summary: 'Delete a log permanently',
+    summary: 'Delete a log permanently (admin key)',
+    security: adminSecurity,
     request: { params: logIdParamsSchema },
     responses: {
       200: { description: 'Log deleted', content: json(messageResponseSchema) },
       400: errorResponses[400],
+      403: { ...errorResponses[403], description: 'Missing or wrong x-api-key, or foreign origin' },
       404: errorResponses[404],
       500: errorResponses[500],
     },
