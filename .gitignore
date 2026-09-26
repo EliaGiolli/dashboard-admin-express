@@ -28,3 +28,6 @@ backend/src/generated/
 .vscode/
 .idea/
 *.code-workspace
+
+# Browser automation output (screenshots, console logs)
+.playwright-mcp/

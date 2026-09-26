@@ -27,6 +27,8 @@ export function scriptPath(entry: ActionEntry): string {
 export type ActionEntry = ActionDefinition & {
   script: string;
   buildArgs: (request: RunActionRequest) => string[];
+  // Overrides the runner's default (60s) for scripts that legitimately take longer.
+  timeoutMs?: number;
 };
 
 // PIDs the server never kills, whichever route asks: 0 (System Idle) and 4 (System) are
@@ -63,6 +65,8 @@ export const actionRegistry: Record<ActionId, ActionEntry> = {
     target: 'system',
     script: 'clear-temp.ps1',
     buildArgs: noArgs,
+    // Walks the whole temp folder: 1.5 GB / 12k files took 55s on a real machine.
+    timeoutMs: 10 * 60_000,
   },
   'empty-recyclebin': {
     id: 'empty-recyclebin',
@@ -73,6 +77,8 @@ export const actionRegistry: Record<ActionId, ActionEntry> = {
     target: 'system',
     script: 'empty-recyclebin.ps1',
     buildArgs: noArgs,
+    // Deleting a large bin across drives can take a while.
+    timeoutMs: 2 * 60_000,
   },
   'kill-process': {
     id: 'kill-process',
